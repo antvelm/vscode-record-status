@@ -1,69 +1,125 @@
 {
     "name": "record-status",
     "displayName": "Record Status",
-    "description": "Shows the status written inside a Markdown file (tasks, decisions, ADRs) as the file's icon and name colour in the Explorer. File names never change.",
-    "version": "0.2.0",
+    "description": "Shows the status written inside a Markdown file (tasks, decisions, specs, ADRs) as the file's icon, name colour and folder progress in the Explorer. File names never change.",
+    "version": "0.3.0",
     "publisher": "antvelm",
     "license": "MIT",
+    "icon": "icon.png",
     "repository": { "type": "git", "url": "https://github.com/antvelm/vscode-record-status" },
     "engines": { "vscode": "^1.72.0" },
-    "categories": ["Other"],
-    "keywords": ["markdown", "status", "tasks", "adr", "explorer", "icons", "decorations"],
+    "categories": ["Themes", "Other"],
+    "keywords": ["markdown", "status", "tasks", "adr", "decisions", "explorer", "icons", "decorations", "progress"],
     "activationEvents": ["onStartupFinished"],
     "main": "./extension.js",
+    "scripts": {
+        "build-theme": "node scripts/build-theme.js",
+        "vscode:prepublish": "node scripts/build-theme.js",
+        "test": "node --test",
+        "showcase": "node scripts/build-showcase.js"
+    },
+    "devDependencies": {
+        "material-icon-theme": "5.39.0"
+    },
     "contributes": {
+        "iconThemes": [
+            {
+                "id": "record-status-icons",
+                "label": "Record Status Icons",
+                "path": "./theme/record-status-icons.json",
+                "_watch": true
+            }
+        ],
+        "commands": [
+            { "command": "recordStatus.configure", "title": "Configure…", "category": "Record Status" },
+            { "command": "recordStatus.showLog", "title": "Show Log", "category": "Record Status" }
+        ],
         "configuration": {
             "title": "Record Status",
             "properties": {
-                "recordStatus.include": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "default": [
-                        "doc/tasks/[0-9][0-9][0-9]-*.md",
-                        "doc/decisions/[0-9][0-9][0-9]-*.md"
-                    ],
-                    "description": "Glob patterns, relative to the workspace folder, of the files whose status is shown."
-                },
-                "recordStatus.statusPattern": {
-                    "type": "string",
-                    "default": "\\*\\*Status:\\*\\*\\s*([^·\\n]+)",
-                    "description": "Regular expression that finds the status inside a file. The first capture group is the status. It is lower-cased, and anything from \" by \" on is dropped, so \"Superseded by 004\" reads as \"superseded\"."
-                },
-                "recordStatus.statuses": {
+                "recordStatus.profiles": {
                     "type": "object",
-                    "default": {
-                        "planned":     { "icon": "todo",     "iconColor": "gray-500",  "nameColor": "recordStatus.planned" },
-                        "in progress": { "icon": "settings", "iconColor": "amber-500", "nameColor": "recordStatus.inProgress" },
-                        "completed":   { "icon": "verified", "iconColor": "green-500", "nameColor": "recordStatus.completed" },
-                        "dropped":     { "icon": "lock",     "iconColor": "gray-700",  "nameColor": "recordStatus.dropped" },
-                        "proposed":    { "icon": "roadmap",  "iconColor": "blue-500",  "nameColor": "recordStatus.proposed" },
-                        "accepted":    { "icon": "verified", "iconColor": "green-500", "nameColor": "recordStatus.completed" },
-                        "superseded":  { "icon": "lock",     "iconColor": "gray-700",  "nameColor": "recordStatus.dropped" }
-                    },
+                    "default": {},
+                    "markdownDescription": "Kinds of record, in order: the first profile whose `include` globs match a file owns it. Each profile has `include` (globs relative to the workspace folder), an optional `statusPattern`, and `statuses` (word → look). Empty uses the built-in profiles: `task` (`**/tasks/*.md`), `decision` (`**/decisions/*.md`), `spec` (`**/spec/*.md`) and `reference` (`**/assessments/*.md`).",
                     "additionalProperties": {
                         "type": "object",
                         "properties": {
-                            "icon": { "type": "string", "description": "Material Icon Theme icon to show instead of the file's own, e.g. \"todo\", \"verified\", \"lock\". Empty keeps the file's icon." },
-                            "iconColor": { "type": "string", "description": "Material Icon Theme palette colour (\"amber-500\", \"gray-500\", ...) or a hex colour." },
-                            "nameColor": { "type": "string", "description": "Theme colour id for the file name, e.g. \"recordStatus.completed\" or \"charts.green\". Empty leaves the name alone." },
-                            "badge": { "type": "string", "description": "Up to two characters shown after the file name. Empty (the default) shows none." }
+                            "include": { "type": "array", "items": { "type": "string" }, "description": "Globs, relative to the workspace folder, of this kind's files." },
+                            "statusPattern": { "type": "string", "description": "Regular expression that finds the status; the first group is it. Defaults to recordStatus.statusPattern." },
+                            "statuses": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "icon": { "type": "string", "description": "Material Icon Theme icon name, e.g. \"todo\", \"verified\", \"key\". Empty keeps the file's icon." },
+                                        "iconColor": { "type": "string", "description": "Material palette colour (\"amber-500\", \"gray-500\", …) or a hex colour." },
+                                        "nameColor": { "type": "string", "description": "Theme colour id for the file name, e.g. \"recordStatus.completed\". Empty leaves the name alone." },
+                                        "badge": { "type": "string", "description": "Up to two characters always shown after the name." },
+                                        "glyph": { "type": "string", "description": "Up to two characters shown after the name when icons are not available (badge mode)." },
+                                        "rollup": { "type": "string", "enum": ["done", "skip"], "description": "For folder roll-up: \"done\" counts as done, \"skip\" is not counted." }
+                                    }
+                                }
+                            }
                         }
-                    },
-                    "description": "What each status looks like. Keys are statuses in lower case."
+                    }
+                },
+                "recordStatus.statusPattern": {
+                    "type": "string",
+                    "default": "\\*\\*Status:\\*\\*\\s*([A-Za-z-]+)",
+                    "description": "Default regular expression that finds the status inside a file. The first capture group is the status. It is lower-cased, and anything from \" by \" on is dropped."
+                },
+                "recordStatus.iconMode": {
+                    "type": "string",
+                    "enum": ["auto", "bundled", "material", "badge", "off"],
+                    "enumDescriptions": [
+                        "Bundled when Record Status Icons is the active file icon theme, Material when Material Icon Theme is, otherwise badges.",
+                        "Use this extension's icon theme, Record Status Icons. Writes nothing into the workspace. Falls back to badges while another icon theme is active.",
+                        "Material Icon Theme clones, written into the workspace settings (material-icon-theme.files.customClones).",
+                        "No icon change: a coloured glyph after the file name.",
+                        "Name colour only."
+                    ],
+                    "default": "auto",
+                    "description": "How a record's status reaches its Explorer icon."
+                },
+                "recordStatus.rollup": {
+                    "type": "object",
+                    "default": {},
+                    "markdownDescription": "Folder progress badges: the percentage of records that are done, `✓` at 100%. `enabled` (default true), `profiles` (whose records count; default `[\"task\"]`), `folders` (globs of folders that get a badge; empty means the folder above each record's folder, e.g. `SavesV2` for `SavesV2/tasks/*.md`), `nameColor` (folder name colour at 100%; default `recordStatus.completed`).",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "profiles": { "type": "array", "items": { "type": "string" } },
+                        "folders": { "type": "array", "items": { "type": "string" } },
+                        "nameColor": { "type": "string" }
+                    }
+                },
+                "recordStatus.include": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "markdownDeprecationMessage": "Use `recordStatus.profiles`. Still read, as one profile, when `profiles` is empty.",
+                    "description": "0.2: globs of the files whose status is shown."
+                },
+                "recordStatus.statuses": {
+                    "type": "object",
+                    "markdownDeprecationMessage": "Use `recordStatus.profiles`. Still read, as one profile, when `profiles` is empty.",
+                    "description": "0.2: what each status looks like."
                 },
                 "recordStatus.icons": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Replace the file icon with the status icon. Needs Material Icon Theme as the active icon theme; writes `material-icon-theme.files.customClones` (entries named `record-*`) into the workspace settings."
+                    "markdownDeprecationMessage": "Use `recordStatus.iconMode`; `false` here means `off`.",
+                    "description": "0.2: replace the file icon with the status icon."
                 }
             }
         },
         "colors": [
-            { "id": "recordStatus.planned",    "description": "Planned",                 "defaults": { "dark": "#8a8f98", "light": "#6b7280", "highContrast": "#8a8f98" } },
-            { "id": "recordStatus.inProgress", "description": "In progress",             "defaults": { "dark": "#e0a800", "light": "#b45309", "highContrast": "#e0a800" } },
-            { "id": "recordStatus.completed",  "description": "Completed / accepted",    "defaults": { "dark": "#3cb371", "light": "#15803d", "highContrast": "#3cb371" } },
-            { "id": "recordStatus.dropped",    "description": "Dropped / superseded",    "defaults": { "dark": "#5a5f66", "light": "#9ca3af", "highContrast": "#5a5f66" } },
-            { "id": "recordStatus.proposed",   "description": "Proposed",                "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } }
+            { "id": "recordStatus.planned",    "description": "Planned / draft",          "defaults": { "dark": "#8a8f98", "light": "#6b7280", "highContrast": "#8a8f98" } },
+            { "id": "recordStatus.inProgress", "description": "In progress / active",     "defaults": { "dark": "#e0a800", "light": "#b45309", "highContrast": "#e0a800" } },
+            { "id": "recordStatus.check",      "description": "Built, waiting for a look", "defaults": { "dark": "#22b8cf", "light": "#0e7490", "highContrast": "#22b8cf" } },
+            { "id": "recordStatus.completed",  "description": "Completed / accepted",     "defaults": { "dark": "#3cb371", "light": "#15803d", "highContrast": "#3cb371" } },
+            { "id": "recordStatus.blocked",    "description": "Blocked",                  "defaults": { "dark": "#f0605d", "light": "#b91c1c", "highContrast": "#f0605d" } },
+            { "id": "recordStatus.living",     "description": "Spec being built",         "defaults": { "dark": "#6cb6ff", "light": "#1d4ed8", "highContrast": "#6cb6ff" } },
+            { "id": "recordStatus.dropped",    "description": "Dropped / superseded",     "defaults": { "dark": "#5a5f66", "light": "#9ca3af", "highContrast": "#5a5f66" } },
+            { "id": "recordStatus.proposed",   "description": "Proposed / open / review", "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } }
         ]
     }
 }

@@ -2,3 +2,9 @@
 .gitignore
 install.py
 docs/
+*.vsix
+test/
+scripts/
+node_modules/
+package-lock.json
+theme/generated/

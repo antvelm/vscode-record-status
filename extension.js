@@ -1,180 +1,339 @@
 // Record Status: shows the status written inside a Markdown file on that file in the Explorer.
 //
-// Two layers, both driven by the same status read from the file:
-//  - a FileDecoration (name colour, optional badge), the API git uses for "M";
-//  - the file icon itself, through Material Icon Theme: VS Code has no API for one extension to
-//    set another file's icon, but Material Icon Theme builds per-file-name "clone" icons from its
-//    `customClones` setting and re-renders when that setting changes. This extension keeps a set
-//    of `record-*` clones in the workspace settings, listing the exact file names in each status.
+// The status read from each file drives:
+//  - a FileDecoration (name colour, tooltip, optional badge), the API git uses for "M";
+//  - the file icon, in one of these ways (`recordStatus.iconMode`):
+//      bundled  - this extension's own file icon theme, "Record Status Icons": Material Icon
+//                 Theme's icons copied in at build time, plus one recoloured icon per status. The
+//                 theme manifest in the extension folder is rewritten when statuses change, and VS
+//                 Code reloads it (`_watch` in package.json). Writes nothing into the workspace.
+//      material - Material Icon Theme `customClones` in the workspace settings, as in 0.2.
+//      badge    - no icon; a coloured glyph after the name.
+//  - a roll-up badge on folders: the percentage of their tasks that are done.
 //
-// File names are never touched, so links to the files stay valid.
+// File names are never touched, so links to the files stay valid. The logic that needs no VS Code
+// is in core.js.
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
+const core = require("./core");
 
 const MATERIAL = "PKief.material-icon-theme";
-const CLONE_PREFIX = "record-";
+const MATERIAL_THEME = "material-icon-theme";
+const BUNDLED_THEME = "record-status-icons";
+const PROMPTED_KEY = "recordStatus.iconPromptShown";
 
-/** Reads the extension's settings, recompiling the pattern each time they change. */
+function explicit(config, key) {
+    const i = config.inspect(key) || {};
+    return i.workspaceFolderValue ?? i.workspaceValue ?? i.globalValue;
+}
+
+/** Reads the extension's settings into one object. */
 function settings() {
     const config = vscode.workspace.getConfiguration("recordStatus");
-    let pattern;
-    try {
-        pattern = new RegExp(config.get("statusPattern"));
-    } catch (e) {
-        console.error("record-status: bad statusPattern", e);
-        pattern = /\*\*Status:\*\*\s*([^·\n]+)/;
-    }
-    const statuses = {};
-    for (const [key, look] of Object.entries(config.get("statuses") || {})) {
-        statuses[key.toLowerCase()] = look || {};
-    }
+    const profiles = core.resolveProfiles({
+        profiles: config.get("profiles"),
+        legacy: { include: explicit(config, "include"), statuses: explicit(config, "statuses") },
+        statusPattern: config.get("statusPattern"),
+    });
+    const byName = Object.fromEntries(profiles.map((p) => [p.name, p]));
+    let iconMode = config.get("iconMode") || "auto";
+    if (config.get("icons") === false) { iconMode = "off"; }
+    const rollup = config.get("rollup") || {};
     return {
-        include: config.get("include") || [],
-        pattern,
-        statuses,
-        icons: config.get("icons") !== false,
+        profiles,
+        byName,
+        iconMode,
+        rollup: {
+            enabled: rollup.enabled !== false,
+            profiles: rollup.profiles || ["task"],
+            folderMatchers: (rollup.folders || []).map(core.globToRegExp),
+            nameColor: rollup.nameColor === undefined ? "recordStatus.completed" : rollup.nameColor,
+        },
     };
 }
 
-/** The status written in a file, normalised, or null. */
-function readStatus(fsPath, pattern) {
+function relPathOf(uri) {
+    const folder = vscode.workspace.getWorkspaceFolder(uri);
+    if (!folder) { return null; }
+    return { folder, rel: path.relative(folder.uri.fsPath, uri.fsPath).split(path.sep).join("/") };
+}
+
+function readFileStatus(fsPath, pattern) {
     try {
-        const m = pattern.exec(fs.readFileSync(fsPath, "utf8"));
-        if (!m || !m[1]) { return null; }
-        return m[1].trim().toLowerCase().split(" by ")[0].trim();
+        return core.readStatus(fs.readFileSync(fsPath, "utf8"), pattern);
     } catch {
         return null;
     }
 }
 
+function titleCase(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+
 class RecordStatus {
-    constructor() {
+    constructor(context, log) {
+        this._context = context;
+        this._log = log;
         this._emitter = new vscode.EventEmitter();
         this.onDidChangeFileDecorations = this._emitter.event;
-        /** fsPath -> status, for every matched file. */
-        this._status = new Map();
+        /** fsPath -> { fsPath, rel, folder, profile, status } for every matched file. */
+        this._records = new Map();
+        /** folder fsPath -> { done, counted } */
+        this._rollup = new Map();
         this._settings = settings();
+        this._mode = "badge";
         this._pending = undefined;
+        this._lastShared = "";
+        this._themeDir = path.join(context.extensionPath, "theme");
+    }
+
+    /** The icon mode in effect: the setting, resolved against the active icon theme. */
+    effectiveMode() {
+        const mode = this._settings.iconMode;
+        const theme = vscode.workspace.getConfiguration("workbench").get("iconTheme");
+        const materialActive = theme === MATERIAL_THEME && !!vscode.extensions.getExtension(MATERIAL);
+        switch (mode) {
+            case "off": return "off";
+            case "badge": return "badge";
+            case "material": return "material";
+            case "bundled": return theme === BUNDLED_THEME ? "bundled" : "badge";
+            default:
+                if (theme === BUNDLED_THEME) { return "bundled"; }
+                return materialActive ? "material" : "badge";
+        }
     }
 
     /** Finds every matched file and reads its status, then refreshes everything that shows it. */
     async rescan() {
         this._settings = settings();
+        this._mode = this.effectiveMode();
         const found = new Map();
-        for (const glob of this._settings.include) {
+        const globs = new Set(this._settings.profiles.flatMap((p) => p.include));
+        for (const glob of globs) {
             for (const uri of await vscode.workspace.findFiles(glob, null)) {
-                found.set(uri.fsPath, readStatus(uri.fsPath, this._settings.pattern));
+                if (found.has(uri.fsPath)) { continue; }
+                const record = this.recordFor(uri);
+                if (record) { found.set(uri.fsPath, record); }
             }
         }
-        this._status = found;
+        this._records = found;
+        this.recomputeRollup();
         this._emitter.fire(undefined);
-        await this.syncIcons();
+        await this.applyIcons();
+        this.maybePrompt();
+    }
+
+    /** A record for a file, or null when no profile matches it. */
+    recordFor(uri) {
+        const where = relPathOf(uri);
+        if (!where) { return null; }
+        const profile = core.profileFor(where.rel, this._settings.profiles);
+        if (!profile) { return null; }
+        return {
+            fsPath: uri.fsPath,
+            rel: where.rel,
+            folder: where.folder.uri.fsPath,
+            profile: profile.name,
+            status: readFileStatus(uri.fsPath, profile.pattern),
+        };
     }
 
     /** Re-reads one file after it changed. */
     update(uri) {
-        if (!this._status.has(uri.fsPath) && !this.matches(uri)) { return; }
-        this._status.set(uri.fsPath, readStatus(uri.fsPath, this._settings.pattern));
-        this._emitter.fire(uri);
+        const record = this.recordFor(uri);
+        if (!record) { return; }
+        const before = this._records.get(uri.fsPath);
+        if (before && before.status === record.status && before.profile === record.profile) { return; }
+        this._records.set(uri.fsPath, record);
+        this._emitter.fire([uri, ...this.recomputeRollup()]);
         this.scheduleIcons();
     }
 
-    /** Is a file one of ours? Checked by a rescan when a new file appears. */
-    matches(uri) {
-        return this._settings.include.some((glob) => {
-            const folder = vscode.workspace.getWorkspaceFolder(uri);
-            if (!folder) { return false; }
-            const rel = path.relative(folder.uri.fsPath, uri.fsPath).split(path.sep).join("/");
-            return globToRegExp(glob).test(rel);
-        });
+    /** Rebuilds the roll-up counts; returns the folder URIs whose badge may have changed. */
+    recomputeRollup() {
+        const old = this._rollup;
+        const r = this._settings.rollup;
+        if (!r.enabled) {
+            this._rollup = new Map();
+        } else {
+            const foldersOf = (rec) =>
+                core.rollupFolders(rec.rel, r.folderMatchers).map((f) => path.join(rec.folder, ...f.split("/")));
+            this._rollup = core.rollup([...this._records.values()], this._settings.byName, r, foldersOf);
+        }
+        const keys = new Set([...old.keys(), ...this._rollup.keys()]);
+        return [...keys].map((k) => vscode.Uri.file(k));
     }
 
     provideFileDecoration(uri) {
         if (uri.scheme !== "file") { return undefined; }
-        const status = this._status.get(uri.fsPath);
-        const look = status && this._settings.statuses[status];
-        if (!look || (!look.nameColor && !look.badge)) { return undefined; }
-        const label = status.charAt(0).toUpperCase() + status.slice(1);
-        return new vscode.FileDecoration(look.badge || undefined, label,
-            look.nameColor ? new vscode.ThemeColor(look.nameColor) : undefined);
+        const record = this._records.get(uri.fsPath);
+        if (record) { return this.recordDecoration(record); }
+        const counts = this._rollup.get(uri.fsPath);
+        if (counts) { return this.folderDecoration(counts); }
+        return undefined;
+    }
+
+    recordDecoration(record) {
+        const look = core.lookOf(record, this._settings.byName);
+        if (!look) { return undefined; }
+        let badge = look.badge || undefined;
+        if (!badge && this._mode === "badge" && look.glyph) { badge = look.glyph; }
+        const tooltip = `${titleCase(record.profile)}: ${titleCase(record.status)}`;
+        return new vscode.FileDecoration(badge, tooltip, look.nameColor ? new vscode.ThemeColor(look.nameColor) : undefined);
+    }
+
+    folderDecoration(counts) {
+        const badge = core.rollupBadge(counts);
+        if (!badge) { return undefined; }
+        const complete = counts.done >= counts.counted;
+        const color = complete && this._settings.rollup.nameColor ? new vscode.ThemeColor(this._settings.rollup.nameColor) : undefined;
+        return new vscode.FileDecoration(badge, `${counts.done} of ${counts.counted} done`, color);
     }
 
     scheduleIcons() {
         clearTimeout(this._pending);
-        this._pending = setTimeout(() => this.syncIcons().catch((e) => console.error("record-status:", e)), 300);
+        this._pending = setTimeout(() => this.applyIcons().catch((e) => this._log.appendLine(`icons: ${e}`)), 300);
     }
 
-    /** Writes one Material Icon Theme clone per status, listing the file names in that status. */
-    async syncIcons() {
-        if (!vscode.extensions.getExtension(MATERIAL)) { return; }
-        const config = vscode.workspace.getConfiguration("material-icon-theme.files");
-        const current = (config.inspect("customClones") || {}).workspaceValue || [];
-        const kept = current.filter((c) => !(c && typeof c.name === "string" && c.name.startsWith(CLONE_PREFIX)));
+    /** Brings the icons in line with the records for the current mode. */
+    async applyIcons() {
+        const groups = core.iconGroups([...this._records.values()], this._settings.byName);
+        const shared = groups.shared.join(", ");
+        if (shared && shared !== this._lastShared) {
+            this._log.appendLine(`No status icon for file names used by records in different states: ${shared}`);
+        }
+        this._lastShared = shared;
 
-        const clones = [];
-        if (this._settings.icons) {
-            const names = {};
-            for (const [fsPath, status] of this._status) {
-                const look = status && this._settings.statuses[status];
-                if (!look || !look.icon) { continue; }
-                (names[status] = names[status] || []).push(path.basename(fsPath).toLowerCase());
-            }
-            for (const status of Object.keys(names).sort()) {
-                const look = this._settings.statuses[status];
-                const clone = { name: CLONE_PREFIX + status.replace(/\s+/g, "-"), base: look.icon, fileNames: names[status].sort() };
-                if (look.iconColor) { clone.color = look.iconColor; }
-                clones.push(clone);
+        // Material clones live in the workspace settings: write them only in material mode, and
+        // remove ours once when another mode takes over.
+        await this.syncClones(this._mode === "material" ? groups : { byId: {} });
+        if (this._settings.iconMode !== "off") {
+            try {
+                this.writeBundledTheme(groups);
+            } catch (e) {
+                this._log.appendLine(`bundled theme: ${e}`);
             }
         }
+    }
 
-        const next = kept.concat(clones);
-        if (JSON.stringify(next) === JSON.stringify(current)) { return; }
+    async syncClones(groups) {
+        if (!vscode.extensions.getExtension(MATERIAL)) { return; }
+        const config = vscode.workspace.getConfiguration("material-icon-theme.files");
+        const current = (config.inspect("customClones") || {}).workspaceValue;
+        const next = core.buildClones(current || [], groups);
+        if (JSON.stringify(next) === JSON.stringify(current || [])) { return; }
         await config.update("customClones", next.length ? next : undefined, vscode.ConfigurationTarget.Workspace);
+    }
+
+    /** Rewrites the bundled theme manifest and its recoloured status icons, when they changed. */
+    writeBundledTheme(groups) {
+        const basePath = path.join(this._themeDir, "material-icons.base.json");
+        if (!fs.existsSync(basePath)) { return; }
+        if (!this._base) { this._base = JSON.parse(fs.readFileSync(basePath, "utf8")); }
+        const generated = path.join(this._themeDir, "generated");
+        fs.mkdirSync(generated, { recursive: true });
+        for (const [id, g] of Object.entries(groups.byId)) {
+            // Look the icon up in the manifest: Material keeps derived icons as "<name>.clone.svg".
+            const def = this._base.iconDefinitions[g.look.icon];
+            const source = def && path.join(this._themeDir, def.iconPath);
+            if (!source || !fs.existsSync(source)) {
+                this._log.appendLine(`bundled theme: no icon "${g.look.icon}" (status ${g.profile}/${g.status})`);
+                continue;
+            }
+            const hex = core.resolveColor(g.look.iconColor);
+            if (g.look.iconColor && !hex) {
+                this._log.appendLine(`bundled theme: unknown colour "${g.look.iconColor}" (status ${g.profile}/${g.status})`);
+            }
+            const svg = fs.readFileSync(source, "utf8");
+            writeIfChanged(path.join(generated, `${id}.svg`), hex ? core.recolorSvg(svg, hex) : svg);
+        }
+        const manifest = core.buildThemeManifest(this._base, groups, (id) => `./generated/${id}.svg`);
+        writeIfChanged(path.join(this._themeDir, "record-status-icons.json"), JSON.stringify(manifest));
+    }
+
+    /** Once per user: offer an icon source when records exist but only badges can be shown. */
+    maybePrompt() {
+        if (!this._records.size || this._mode !== "badge" || this._settings.iconMode === "badge") { return; }
+        const state = this._context.globalState;
+        if (state.get(PROMPTED_KEY)) { return; }
+        state.update(PROMPTED_KEY, true);
+        const use = "Use Record Status Icons";
+        const badges = "Badges only";
+        vscode.window.showInformationMessage(
+            "Record Status: show each record's status as its Explorer icon? This switches your file icon theme to Record Status Icons (Material Icon Theme's icons plus status icons).",
+            use, badges,
+        ).then((choice) => {
+            if (choice === use) {
+                vscode.workspace.getConfiguration("workbench").update("iconTheme", BUNDLED_THEME, vscode.ConfigurationTarget.Global);
+            } else if (choice === badges) {
+                vscode.workspace.getConfiguration("recordStatus").update("iconMode", "badge", vscode.ConfigurationTarget.Global);
+            }
+        });
     }
 }
 
-/** Minimal glob -> RegExp for `*`, `**`, `?` and `[...]`, matched against a forward-slash path. */
-function globToRegExp(glob) {
-    let re = "";
-    for (let i = 0; i < glob.length; i++) {
-        const c = glob[i];
-        if (c === "*") {
-            if (glob[i + 1] === "*") { re += ".*"; i++; if (glob[i + 1] === "/") { i++; } }
-            else { re += "[^/]*"; }
-        } else if (c === "?") {
-            re += "[^/]";
-        } else if (c === "[") {
-            const end = glob.indexOf("]", i);
-            if (end < 0) { re += "\\["; continue; }
-            re += glob.slice(i, end + 1);
-            i = end;
-        } else {
-            re += c.replace(/[.+^${}()|\\]/g, "\\$&");
-        }
+function writeIfChanged(file, text) {
+    try {
+        if (fs.readFileSync(file, "utf8") === text) { return; }
+    } catch {
+        // missing: write it
     }
-    return new RegExp("^" + re + "$", "i");
+    fs.writeFileSync(file, text);
+}
+
+/** "Record Status: Configure…": adds a folder's Markdown files to a profile in the workspace settings. */
+async function configure() {
+    const config = vscode.workspace.getConfiguration("recordStatus");
+    const current = config.get("profiles");
+    const profiles = JSON.parse(JSON.stringify(current && Object.keys(current).length ? current : core.DEFAULT_PROFILES));
+    const pick = await vscode.window.showQuickPick(
+        Object.entries(profiles).map(([name, p]) => ({ label: name, description: Object.keys(p.statuses || {}).join(" · ") })),
+        { placeHolder: "Which kind of record are the files?" },
+    );
+    if (!pick) { return; }
+    const folders = await vscode.window.showOpenDialog({
+        canSelectFolders: true, canSelectFiles: false, canSelectMany: true,
+        defaultUri: vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri,
+        openLabel: `Use as ${pick.label} records`,
+    });
+    if (!folders || !folders.length) { return; }
+    const include = profiles[pick.label].include = profiles[pick.label].include || [];
+    for (const uri of folders) {
+        const where = relPathOf(uri);
+        if (!where) {
+            vscode.window.showWarningMessage(`${uri.fsPath} is not inside the workspace.`);
+            continue;
+        }
+        const glob = where.rel ? `${where.rel}/*.md` : "*.md";
+        if (!include.includes(glob)) { include.push(glob); }
+    }
+    await config.update("profiles", profiles, vscode.ConfigurationTarget.Workspace);
+    vscode.window.showInformationMessage(`Record Status: ${pick.label} records now include ${include.join(", ")}.`);
 }
 
 function activate(context) {
-    const records = new RecordStatus();
-    context.subscriptions.push(vscode.window.registerFileDecorationProvider(records));
+    const log = vscode.window.createOutputChannel("Record Status");
+    const records = new RecordStatus(context, log);
+    context.subscriptions.push(log, vscode.window.registerFileDecorationProvider(records));
 
-    // Any Markdown file may become one of ours, so watch them all and filter by the include globs.
+    // Any Markdown file may become one of ours, so watch them all and filter by profile.
     const watcher = vscode.workspace.createFileSystemWatcher("**/*.md");
     watcher.onDidChange((uri) => records.update(uri));
-    watcher.onDidCreate((uri) => { if (records.matches(uri)) { records.rescan(); } });
-    watcher.onDidDelete((uri) => { if (records._status.has(uri.fsPath)) { records.rescan(); } });
+    watcher.onDidCreate((uri) => { if (records.recordFor(uri)) { records.rescan(); } });
+    watcher.onDidDelete((uri) => { if (records._records.has(uri.fsPath)) { records.rescan(); } });
     context.subscriptions.push(watcher);
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((doc) => records.update(doc.uri)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration("recordStatus")) { records.rescan(); }
+        if (e.affectsConfiguration("recordStatus") || e.affectsConfiguration("workbench.iconTheme")) { records.rescan(); }
     }));
     context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => records.rescan()));
+    context.subscriptions.push(vscode.commands.registerCommand("recordStatus.configure", configure));
+    context.subscriptions.push(vscode.commands.registerCommand("recordStatus.showLog", () => log.show()));
 
-    records.rescan().catch((e) => console.error("record-status:", e));
+    records.rescan().catch((e) => log.appendLine(`rescan: ${e}`));
 }
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, _test: { globToRegExp, readStatus } };
+module.exports = { activate, deactivate };

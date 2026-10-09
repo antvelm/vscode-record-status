@@ -4,15 +4,7 @@ A VS Code extension that shows the status written *inside* a Markdown file — a
 decision, an ADR — on that file in the Explorer, as its icon and the colour of its name. Change the
 status line, save, and the Explorer follows. File names never change, so links keep working.
 
-```
-doc/
-  tasks/
-    [gear, amber]      001-ignition-feel.md          **Status:** in progress
-    [checklist, gray]  002-fire-arrow-visuals.md     **Status:** planned
-    [badge, green]     006-hotbar-remap.md           **Status:** completed
-  decisions/
-    [roadmap, blue]    001-fire-arrow-ignition.md    **Status:** proposed
-```
+![Record Status in the VS Code Explorer: each task and decision file shows its status as its icon and name colour](docs/preview.png)
 
 ## How it works
 

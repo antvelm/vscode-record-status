@@ -1,0 +1,69 @@
+{
+    "name": "record-status",
+    "displayName": "Record Status",
+    "description": "Shows the status written inside a Markdown file (tasks, decisions, ADRs) as the file's icon and name colour in the Explorer. File names never change.",
+    "version": "0.2.0",
+    "publisher": "antvelm",
+    "license": "MIT",
+    "repository": { "type": "git", "url": "https://github.com/antvelm/vscode-record-status" },
+    "engines": { "vscode": "^1.72.0" },
+    "categories": ["Other"],
+    "keywords": ["markdown", "status", "tasks", "adr", "explorer", "icons", "decorations"],
+    "activationEvents": ["onStartupFinished"],
+    "main": "./extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "Record Status",
+            "properties": {
+                "recordStatus.include": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "default": [
+                        "doc/tasks/[0-9][0-9][0-9]-*.md",
+                        "doc/decisions/[0-9][0-9][0-9]-*.md"
+                    ],
+                    "description": "Glob patterns, relative to the workspace folder, of the files whose status is shown."
+                },
+                "recordStatus.statusPattern": {
+                    "type": "string",
+                    "default": "\\*\\*Status:\\*\\*\\s*([^·\\n]+)",
+                    "description": "Regular expression that finds the status inside a file. The first capture group is the status. It is lower-cased, and anything from \" by \" on is dropped, so \"Superseded by 004\" reads as \"superseded\"."
+                },
+                "recordStatus.statuses": {
+                    "type": "object",
+                    "default": {
+                        "planned":     { "icon": "todo",     "iconColor": "gray-500",  "nameColor": "recordStatus.planned" },
+                        "in progress": { "icon": "settings", "iconColor": "amber-500", "nameColor": "recordStatus.inProgress" },
+                        "completed":   { "icon": "verified", "iconColor": "green-500", "nameColor": "recordStatus.completed" },
+                        "dropped":     { "icon": "lock",     "iconColor": "gray-700",  "nameColor": "recordStatus.dropped" },
+                        "proposed":    { "icon": "roadmap",  "iconColor": "blue-500",  "nameColor": "recordStatus.proposed" },
+                        "accepted":    { "icon": "verified", "iconColor": "green-500", "nameColor": "recordStatus.completed" },
+                        "superseded":  { "icon": "lock",     "iconColor": "gray-700",  "nameColor": "recordStatus.dropped" }
+                    },
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "icon": { "type": "string", "description": "Material Icon Theme icon to show instead of the file's own, e.g. \"todo\", \"verified\", \"lock\". Empty keeps the file's icon." },
+                            "iconColor": { "type": "string", "description": "Material Icon Theme palette colour (\"amber-500\", \"gray-500\", ...) or a hex colour." },
+                            "nameColor": { "type": "string", "description": "Theme colour id for the file name, e.g. \"recordStatus.completed\" or \"charts.green\". Empty leaves the name alone." },
+                            "badge": { "type": "string", "description": "Up to two characters shown after the file name. Empty (the default) shows none." }
+                        }
+                    },
+                    "description": "What each status looks like. Keys are statuses in lower case."
+                },
+                "recordStatus.icons": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Replace the file icon with the status icon. Needs Material Icon Theme as the active icon theme; writes `material-icon-theme.files.customClones` (entries named `record-*`) into the workspace settings."
+                }
+            }
+        },
+        "colors": [
+            { "id": "recordStatus.planned",    "description": "Planned",                 "defaults": { "dark": "#8a8f98", "light": "#6b7280", "highContrast": "#8a8f98" } },
+            { "id": "recordStatus.inProgress", "description": "In progress",             "defaults": { "dark": "#e0a800", "light": "#b45309", "highContrast": "#e0a800" } },
+            { "id": "recordStatus.completed",  "description": "Completed / accepted",    "defaults": { "dark": "#3cb371", "light": "#15803d", "highContrast": "#3cb371" } },
+            { "id": "recordStatus.dropped",    "description": "Dropped / superseded",    "defaults": { "dark": "#5a5f66", "light": "#9ca3af", "highContrast": "#5a5f66" } },
+            { "id": "recordStatus.proposed",   "description": "Proposed",                "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } }
+        ]
+    }
+}

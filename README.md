@@ -88,6 +88,8 @@ then run **Developer: Reload Window**. Run it again after pulling an update.
 | `recordStatus.profiles` | built-in `task`, `decision`, `spec`, `reference` | Kinds of record, in order; the first whose `include` globs match a file owns it. Each has `include`, an optional `statusPattern`, and `statuses` (word → look). A profile named like a built-in one inherits the built-in `include` and `statuses` it doesn't set. |
 | `recordStatus.statusPattern` | `\*\*Status:\*\*\s*([A-Za-z-]+)` | Regex that finds the status; the first group is it. Lower-cased; `"superseded by 004"` reads as `superseded`. |
 | `recordStatus.iconMode` | `auto` | `auto`, `bundled`, `material`, `badge` or `off` (see above). |
+| `recordStatus.colorPreset` | `git` | Name colours: `git` (git's Explorer colours), `classic` (Record Status's own), `soft` (classic, lower contrast), `theme` (the colour theme's chart colours), `quiet` (only what needs attention), `monochrome` (shades of grey, icons included; with Material Icon Theme also set `material-icon-theme.saturation` to 0), `dark` (deeper, muted colours), `none`. |
+| `recordStatus.colors` | `{}` | Per-slot overrides on top of the preset: slot (`planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`) → theme colour id, or `""` for none. |
 | `recordStatus.rollup` | on, tasks | `enabled`, `profiles` (whose records count; `["task"]`), `folders` (globs of folders that get a badge; empty: the folder above each record's folder), `nameColor` (folder name at 100%). |
 
 A look (one entry of `statuses`) has `icon` (a Material Icon Theme icon name), `iconColor` (a
@@ -115,6 +117,15 @@ Example: your own folders for tasks, and ADRs with a front-matter `status: draft
 
 The 0.2 settings `recordStatus.include` and `recordStatus.statuses` still work, as one profile,
 while `profiles` is empty; `recordStatus.icons: false` means `iconMode: "off"`.
+
+Colours: a look's `nameColor` names a slot (`recordStatus.completed`); `colorPreset` and
+`colors` decide which theme colour that slot uses. For an exact hex value, keep the slot on its
+`recordStatus.*` id and set it in `workbench.colorCustomizations`:
+
+```jsonc
+"recordStatus.colors": { "planned": "", "completed": "charts.green" },
+"workbench.colorCustomizations": { "recordStatus.inProgress": "#ff9900" }
+```
 
 The colour ids `recordStatus.planned`, `.inProgress`, `.check`, `.completed`, `.blocked`,
 `.living`, `.dropped` and `.proposed` can be retuned per theme in `workbench.colorCustomizations`.

@@ -149,3 +149,56 @@ test("default looks use icons and colours that exist", () => {
         }
     }
 });
+
+test("resolveNameColor: presets, overrides, other ids pass through", () => {
+    assert.strictEqual(core.DEFAULT_COLOR_PRESET, "git");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed"), "gitDecoration.addedResourceForeground");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "classic"), "recordStatus.completed");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "theme"), "charts.green");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "quiet"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "none"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "git", { blocked: "errorForeground" }), "errorForeground");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "classic", { completed: "" }), "");
+    assert.strictEqual(core.resolveNameColor("charts.red", "none"), "charts.red");
+    assert.strictEqual(core.resolveNameColor("recordStatus.unknown", "none"), "recordStatus.unknown");
+    assert.strictEqual(core.resolveNameColor("", "theme"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.check", "nonsense"), "terminal.ansiCyan");
+    for (const [name, table] of Object.entries(core.COLOR_PRESETS)) {
+        assert.deepStrictEqual(Object.keys(table).sort(), [...core.COLOR_SLOTS].sort(), name);
+    }
+});
+
+test("presetLooks: monochrome greys every icon, per theme; other presets unchanged", () => {
+    assert.strictEqual(core.presetLooks(byName, "default"), byName);
+    const mono = core.presetLooks(byName, "monochrome");
+    const active = mono.task.statuses.active;
+    assert.deepStrictEqual([active.iconColor, active.iconColorLight], ["#eeeeee", "#212121"]);
+    assert.strictEqual(mono.task.statuses.active.icon, "settings");
+    assert.deepStrictEqual([mono.reference.statuses.research.iconColor, mono.reference.statuses.research.iconColorLight], ["#9e9e9e", "#616161"]);
+    assert.strictEqual(byName.task.statuses.active.iconColor, "amber-500");
+    for (const p of Object.values(mono)) {
+        for (const look of Object.values(p.statuses)) {
+            for (const hex of [look.iconColor, look.iconColorLight]) {
+                const [r, g, b] = [1, 3, 5].map((i) => hex.slice(i, i + 2));
+                assert.ok(r === g && g === b, `${hex} is not grey`);
+            }
+        }
+    }
+});
+
+test("light-theme icon colours: a second icon in the manifest, lightColor on the clone", () => {
+    const mono = core.presetLooks(byName, "monochrome");
+    const g = core.iconGroups([rec("a/tasks/T1.md", "task", "done")], mono);
+    const m = core.buildThemeManifest({ iconDefinitions: {}, fileNames: {}, light: { fileNames: {} } }, g, (id) => `./generated/${id}.svg`);
+    assert.strictEqual(m.fileNames["t1.md"], "record-task-done");
+    assert.strictEqual(m.light.fileNames["t1.md"], "record-task-done_light");
+    assert.deepStrictEqual(m.iconDefinitions["record-task-done_light"], { iconPath: "./generated/record-task-done_light.svg" });
+    const [clone] = core.buildClones([], g);
+    assert.deepStrictEqual([clone.color, clone.lightColor], ["#9e9e9e", "#616161"]);
+});
+
+test("greySvg: every hex colour becomes the grey of its luminance", () => {
+    assert.strictEqual(core.greySvg('<path fill="#42a5f5"/><path fill="#FFF"/><g style="fill:#000000"/>'),
+        '<path fill="#969696"/><path fill="#ffffff"/><g style="fill:#000000"/>');
+    assert.strictEqual(core.greySvg('<path fill="none" d="M0 0h24"/>'), '<path fill="none" d="M0 0h24"/>');
+});

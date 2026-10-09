@@ -36,6 +36,8 @@ p { margin: 0 0 12px; color: var(--muted); max-width: 70ch; }
 .seg button { border: 0; background: none; color: var(--ink); font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+select { font: inherit; font-size: 13px; color: var(--ink); background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 5px 8px; }
 .label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
 .explorer { background: var(--ex-bg); color: var(--ex-fg); border-radius: 8px; padding: 4px 0;
   font: 13px/22px "Segoe UI", -apple-system, Helvetica, Arial, sans-serif; user-select: none;
@@ -78,6 +80,9 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
       <button data-v="dark" aria-pressed="true">Dark</button><button data-v="light" aria-pressed="false">Light</button></div></div>
     <div><span class="label">Icon mode</span><div class="seg" id="mode">
       <button data-v="bundled" aria-pressed="true">bundled</button><button data-v="material" aria-pressed="false">material</button><button data-v="badge" aria-pressed="false">badge</button><button data-v="off" aria-pressed="false">off</button></div></div>
+    <div><span class="label">Name colours</span><select id="preset" aria-label="Name colour preset"></select></div>
+    <div><span class="label">Spec icon</span><select id="specIcon" aria-label="Spec icon"></select></div>
+    <div><span class="label">Decision icon</span><select id="decisionIcon" aria-label="Decision icon"></select></div>
   </div>
 
   <div class="layout">
@@ -102,15 +107,59 @@ const MODE_NOTES = {
   badge: "<h3>badge</h3><p>Any icon theme. Files keep their own icon; a glyph after the name, in the name colour, carries the status.</p>",
   off: "<h3>off</h3><p>Name colour only.</p>",
 };
-const state = { ex: "dark", mode: "bundled", tree: DATA.tree.map((r) => ({ ...r })) };
+const state = { ex: "dark", mode: "bundled", preset: DATA.defaultPreset, specIcon: DATA.specIcons[0], decisionIcon: DATA.decisionIcons[0],
+  tree: DATA.tree.map((r) => ({ ...r })) };
+// The default looks name an icon per status; the pickers swap the spec and decision shapes.
+const DEFAULT_ICON = { spec: DATA.profiles.spec.statuses.draft.icon, decision: DATA.profiles.decision.statuses.open.icon };
 // Links can pick the view: showcase.html#mode=badge&ex=light
 for (const [k, v] of new URLSearchParams(location.hash.slice(1))) {
   if (k === "mode" && MODE_NOTES[v]) state.mode = v;
   if (k === "ex" && (v === "dark" || v === "light")) state.ex = v;
+  if (k === "preset" && DATA.presets[v]) state.preset = v;
+  if (k === "spec" && DATA.raw[v]) state.specIcon = v;
+  if (k === "decision" && DATA.raw[v]) state.decisionIcon = v;
 }
 
 function look(r) { const p = DATA.profiles[r.profile]; return p && p.statuses[r.status]; }
 function colorOf(id) { const c = DATA.colors[id]; return c ? c[state.ex] : null; }
+/** A look's name colour under the chosen preset (the extension's resolveNameColor). */
+function nameColor(id) {
+  if (!id) return null;
+  // No backslashes: this script sits inside a template literal.
+  const m = /^recordStatus[.]([A-Za-z]+)$/.exec(id);
+  const resolved = m && DATA.presets[state.preset][m[1]] !== undefined ? DATA.presets[state.preset][m[1]] : id;
+  return resolved ? colorOf(resolved) : null;
+}
+/** The same recolouring the bundled theme does: every fill and stroke but "none". */
+function recolor(svg, hex) {
+  return svg.replace(/(fill|stroke)="(?!none")(?!currentColor")[^"]*"/gi, '$1="' + hex + '"')
+            .replace(/(fill|stroke):[ ]*(?!none)(?!currentColor)[^;"]+/gi, "$1:" + hex);
+}
+/** The extension's greySvg: every hex colour to the grey of the same luminance. */
+function grey(svg) {
+  return svg.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/g, (_, hex) => {
+    const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+    const y = Math.round(0.2126 * parseInt(full.slice(0, 2), 16) + 0.7152 * parseInt(full.slice(2, 4), 16) + 0.0722 * parseInt(full.slice(4, 6), 16));
+    const h = y.toString(16).padStart(2, "0");
+    return "#" + h + h + h;
+  });
+}
+/** A folder or plain file icon; greyscale under presets that grey the whole theme. */
+function themeIcon(key) { return DATA.greyscalePresets.includes(state.preset) ? grey(DATA.icons[key]) : DATA.icons[key]; }
+/** The status icon of (profile, status), with the picked shape for specs and decisions. */
+function statusIcon(profile, status) {
+  const l = DATA.profiles[profile].statuses[status];
+  const pick = profile === "spec" && l.icon === DEFAULT_ICON.spec ? state.specIcon
+    : profile === "decision" && l.icon === DEFAULT_ICON.decision ? state.decisionIcon : null;
+  const ip = DATA.iconPresets[state.preset];
+  if (ip) {
+    // Presets that recolour icons too (monochrome): one colour per slot and theme.
+    const m = /^recordStatus[.]([A-Za-z]+)$/.exec(l.nameColor || "");
+    const c = (m && ip[m[1]]) || ip.other;
+    return recolor(DATA.raw[pick || l.icon], c[state.ex]);
+  }
+  return pick ? recolor(DATA.raw[pick], DATA.palette[l.iconColor]) : DATA.icons["status:" + profile + "/" + status];
+}
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function title(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -145,19 +194,19 @@ function render() {
   state.tree.forEach((r, i) => {
     let icon, color = null, badge = "", tip = "";
     if (r.folder) {
-      icon = DATA.icons[r.open ? r.iconOpen : r.iconClosed];
+      icon = themeIcon(r.open ? r.iconOpen : r.iconClosed);
       const c = roll[r.id];
       if (c && c.counted) {
         badge = c.done >= c.counted ? "✓" : String(Math.floor(100 * c.done / c.counted));
-        if (c.done >= c.counted) color = colorOf("recordStatus.completed");
+        if (c.done >= c.counted) color = nameColor("recordStatus.completed");
         tip = c.done + " of " + c.counted + " done";
       }
     } else {
       const l = look(r);
-      icon = DATA.icons[r.plainIcon];
+      icon = themeIcon(r.plainIcon);
       if (l) {
-        if (iconMode && l.icon && !shared.has(r.name.toLowerCase())) icon = DATA.icons["status:" + r.profile + "/" + r.status];
-        if (l.nameColor) color = colorOf(l.nameColor);
+        if (iconMode && l.icon && !shared.has(r.name.toLowerCase())) icon = statusIcon(r.profile, r.status);
+        color = nameColor(l.nameColor);
         badge = l.badge || (state.mode === "badge" ? l.glyph || "" : "");
         tip = title(r.profile) + ": " + title(r.status);
       }
@@ -184,8 +233,8 @@ function renderLegend() {
   for (const [name, p] of Object.entries(DATA.profiles)) {
     html += '<div class="kind"><h3>' + title(name) + '</h3><div class="glob">' + p.include.map(esc).join(", ") + "</div><table>";
     for (const [word, l] of Object.entries(p.statuses)) {
-      const c = l.nameColor ? colorOf(l.nameColor) : null;
-      html += '<tr><td class="i">' + DATA.icons["status:" + name + "/" + word] + "</td><td><code>" + esc(word) + "</code></td>"
+      const c = nameColor(l.nameColor);
+      html += '<tr><td class="i">' + statusIcon(name, word) + "</td><td><code>" + esc(word) + "</code></td>"
         + "<td>" + (c ? '<span class="swatch" style="background:' + c + '"></span>' : "") + "</td>"
         + '<td class="g">' + esc(l.glyph || "") + "</td><td>" + (l.rollup === "done" ? "done" : l.rollup === "skip" ? "not counted" : "") + "</td></tr>";
     }
@@ -205,6 +254,14 @@ document.getElementById("tree").addEventListener("click", (e) => {
 });
 document.getElementById("ex").addEventListener("click", (e) => { if (e.target.dataset.v) { state.ex = e.target.dataset.v; render(); } });
 document.getElementById("mode").addEventListener("click", (e) => { if (e.target.dataset.v) { state.mode = e.target.dataset.v; render(); } });
+function fillSelect(id, values, key) {
+  const el = document.getElementById(id);
+  el.innerHTML = values.map((v) => '<option value="' + v + '"' + (v === state[key] ? " selected" : "") + ">" + v + "</option>").join("");
+  el.addEventListener("change", () => { state[key] = el.value; render(); });
+}
+fillSelect("preset", Object.keys(DATA.presets), "preset");
+fillSelect("specIcon", DATA.specIcons, "specIcon");
+fillSelect("decisionIcon", DATA.decisionIcons, "decisionIcon");
 render();
 </script>
 </body>

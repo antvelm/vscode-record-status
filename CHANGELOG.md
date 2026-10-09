@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.2
+
+- Name-colour presets (`recordStatus.colorPreset`): `git`, the default, plus `classic` (the 0.3.0
+  colours), `soft` (classic, lower contrast), `theme`, `quiet`, `monochrome`, `dark` and `none`;
+  per-slot overrides in `recordStatus.colors`.
+- `monochrome` greys the icons too: the status icons, with a darker shade for light themes, and in
+  bundled mode every other icon of the theme.
+- Specs use Material's `document` icon (a page with lines of text) instead of `architecture`;
+  decisions use `routing` (a signpost) instead of `key`.
+- The showcase page has pickers for the colour preset, the spec icon and the decision icon.
+
 ## 0.3.0
 
 - **Profiles** (`recordStatus.profiles`): kinds of record, each with its own globs, status pattern

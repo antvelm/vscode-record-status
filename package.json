@@ -2,7 +2,7 @@
     "name": "record-status",
     "displayName": "Record Status",
     "description": "Shows the status written inside a Markdown file (tasks, decisions, specs, ADRs) as the file's icon, name colour and folder progress in the Explorer. File names never change.",
-    "version": "0.3.0",
+    "version": "0.3.2",
     "publisher": "antvelm",
     "license": "MIT",
     "icon": "icon.png",
@@ -72,6 +72,8 @@
                     "type": "string",
                     "enum": ["auto", "bundled", "material", "badge", "off"],
                     "enumDescriptions": [
+                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped). The default.",
+                        "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
                         "Bundled when Record Status Icons is the active file icon theme, Material when Material Icon Theme is, otherwise badges.",
                         "Use this extension's icon theme, Record Status Icons. Writes nothing into the workspace. Falls back to badges while another icon theme is active.",
                         "Material Icon Theme clones, written into the workspace settings (material-icon-theme.files.customClones).",
@@ -80,6 +82,33 @@
                     ],
                     "default": "auto",
                     "description": "How a record's status reaches its Explorer icon."
+                },
+                "recordStatus.colorPreset": {
+                    "type": "string",
+                    "enum": ["git", "classic", "soft", "theme", "quiet", "monochrome", "dark", "none"],
+                    "enumDescriptions": [
+                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped). The default.",
+                        "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
+                        "The classic colours with lower contrast: blended a third of the way toward the background (recordStatus.soft.* ids).",
+                        "Follow the active colour theme: its chart and terminal colours.",
+                        "Colour only what needs attention: active, check, blocked, open or in review, dropped.",
+                        "Shades of grey, icons included: what needs attention is brightest, done is mid, dropped is dimmest (recordStatus.mono.* ids). In bundled mode every icon turns grey; for Material Icon Theme, set material-icon-theme.saturation to 0.",
+                        "Deeper, muted versions of the classic colours (recordStatus.dark.* ids).",
+                        "No name colours; icons and badges only."
+                    ],
+                    "default": "git",
+                    "description": "Which colours file and folder names take for each status."
+                },
+                "recordStatus.colors": {
+                    "type": "object",
+                    "default": {},
+                    "markdownDescription": "Per-slot overrides on top of `colorPreset`: slot → theme colour id, or `\"\"` for no colour. Slots: `planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`. Example: `{ \"completed\": \"charts.green\", \"planned\": \"\" }`. For an exact hex colour, keep the slot on its `recordStatus.<slot>` id and set that id in `workbench.colorCustomizations`.",
+                    "properties": {
+                        "planned": { "type": "string" }, "inProgress": { "type": "string" }, "check": { "type": "string" },
+                        "completed": { "type": "string" }, "blocked": { "type": "string" }, "living": { "type": "string" },
+                        "dropped": { "type": "string" }, "proposed": { "type": "string" }
+                    },
+                    "additionalProperties": false
                 },
                 "recordStatus.rollup": {
                     "type": "object",
@@ -119,7 +148,31 @@
             { "id": "recordStatus.blocked",    "description": "Blocked",                  "defaults": { "dark": "#f0605d", "light": "#b91c1c", "highContrast": "#f0605d" } },
             { "id": "recordStatus.living",     "description": "Spec being built",         "defaults": { "dark": "#6cb6ff", "light": "#1d4ed8", "highContrast": "#6cb6ff" } },
             { "id": "recordStatus.dropped",    "description": "Dropped / superseded",     "defaults": { "dark": "#5a5f66", "light": "#9ca3af", "highContrast": "#5a5f66" } },
-            { "id": "recordStatus.proposed",   "description": "Proposed / open / review", "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } }
+            { "id": "recordStatus.proposed",   "description": "Proposed / open / review", "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } },
+            { "id": "recordStatus.mono.planned", "description": "Monochrome preset: planned / draft", "defaults": { "dark": "#8c8c8c", "light": "#767676", "highContrast": "#8c8c8c" } },
+            { "id": "recordStatus.mono.inProgress", "description": "Monochrome preset: in progress / active", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.mono.check", "description": "Monochrome preset: built, waiting for a look", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.mono.completed", "description": "Monochrome preset: completed / accepted", "defaults": { "dark": "#b4b4b4", "light": "#555555", "highContrast": "#b4b4b4" } },
+            { "id": "recordStatus.mono.blocked", "description": "Monochrome preset: blocked", "defaults": { "dark": "#ffffff", "light": "#000000", "highContrast": "#ffffff" } },
+            { "id": "recordStatus.mono.living", "description": "Monochrome preset: spec being built", "defaults": { "dark": "#b4b4b4", "light": "#555555", "highContrast": "#b4b4b4" } },
+            { "id": "recordStatus.mono.dropped", "description": "Monochrome preset: dropped / superseded", "defaults": { "dark": "#5f5f5f", "light": "#ababab", "highContrast": "#5f5f5f" } },
+            { "id": "recordStatus.mono.proposed", "description": "Monochrome preset: proposed / open / review", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.dark.planned", "description": "Dark preset: planned / draft", "defaults": { "dark": "#6e7681", "light": "#57606a", "highContrast": "#6e7681" } },
+            { "id": "recordStatus.dark.inProgress", "description": "Dark preset: in progress / active", "defaults": { "dark": "#c69026", "light": "#8a5a00", "highContrast": "#c69026" } },
+            { "id": "recordStatus.dark.check", "description": "Dark preset: built, waiting for a look", "defaults": { "dark": "#1b9aaa", "light": "#0b5c6e", "highContrast": "#1b9aaa" } },
+            { "id": "recordStatus.dark.completed", "description": "Dark preset: completed / accepted", "defaults": { "dark": "#3f9b5c", "light": "#1a6b33", "highContrast": "#3f9b5c" } },
+            { "id": "recordStatus.dark.blocked", "description": "Dark preset: blocked", "defaults": { "dark": "#c9514f", "light": "#8f1d1d", "highContrast": "#c9514f" } },
+            { "id": "recordStatus.dark.living", "description": "Dark preset: spec being built", "defaults": { "dark": "#4a83c9", "light": "#1c3f8f", "highContrast": "#4a83c9" } },
+            { "id": "recordStatus.dark.dropped", "description": "Dark preset: dropped / superseded", "defaults": { "dark": "#4b5058", "light": "#8c959f", "highContrast": "#4b5058" } },
+            { "id": "recordStatus.dark.proposed", "description": "Dark preset: proposed / open / review", "defaults": { "dark": "#6f7fc4", "light": "#3a4a9f", "highContrast": "#6f7fc4" } },
+            { "id": "recordStatus.soft.planned", "description": "Soft preset: planned / draft", "defaults": { "dark": "#65686e", "light": "#9fa3ac", "highContrast": "#8a8f98" } },
+            { "id": "recordStatus.soft.inProgress", "description": "Soft preset: in progress / active", "defaults": { "dark": "#9c780b", "light": "#ce8f5f", "highContrast": "#e0a800" } },
+            { "id": "recordStatus.soft.check", "description": "Soft preset: built, waiting for a look", "defaults": { "dark": "#218291", "light": "#62a5b7", "highContrast": "#22b8cf" } },
+            { "id": "recordStatus.soft.completed", "description": "Soft preset: completed / accepted", "defaults": { "dark": "#327f54", "light": "#67ac81", "highContrast": "#3cb371" } },
+            { "id": "recordStatus.soft.blocked", "description": "Soft preset: blocked", "defaults": { "dark": "#a74947", "light": "#d26b6b", "highContrast": "#f0605d" } },
+            { "id": "recordStatus.soft.living", "description": "Soft preset: spec being built", "defaults": { "dark": "#5181b1", "light": "#6c8ce6", "highContrast": "#6cb6ff" } },
+            { "id": "recordStatus.soft.dropped", "description": "Soft preset: dropped / superseded", "defaults": { "dark": "#45494d", "light": "#bfc3cb", "highContrast": "#5a5f66" } },
+            { "id": "recordStatus.soft.proposed", "description": "Soft preset: proposed / open / review", "defaults": { "dark": "#4573b1", "light": "#6c8ce6", "highContrast": "#5aa0ff" } }
         ]
     }
 }

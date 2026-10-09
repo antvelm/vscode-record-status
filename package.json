@@ -15,7 +15,8 @@
     "scripts": {
         "build-theme": "node scripts/build-theme.js",
         "vscode:prepublish": "node scripts/build-theme.js",
-        "test": "node --test"
+        "test": "node --test",
+        "showcase": "node scripts/build-showcase.js"
     },
     "devDependencies": {
         "material-icon-theme": "5.39.0"

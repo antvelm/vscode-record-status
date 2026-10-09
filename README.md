@@ -5,7 +5,16 @@ decision, a spec, an ADR — on that file in the Explorer, as its icon and the c
 and shows on a folder how many of its tasks are done. Change the status line, save, and the
 Explorer follows. File names never change, so links keep working.
 
-![Record Status in the VS Code Explorer: each task and decision file shows its status as its icon and name colour](docs/preview.png)
+<a href="https://antvelm.github.io/vscode-record-status/showcase.html">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/hero-dark.png">
+    <img src="docs/hero-light.png" width="340" alt="Record Status in the VS Code Explorer: each task, decision and spec file shows its status as its icon and name colour, and the folder shows 40% of its tasks done">
+  </picture>
+</a>
+
+**[Try the interactive showcase](https://antvelm.github.io/vscode-record-status/showcase.html)**: switch theme and icon
+mode, click files to change their status. Every case, with dark and light pictures, is also in
+[`docs/showcase.md`](docs/showcase.md).
 
 ## Quick start
 
@@ -114,7 +123,9 @@ The colour ids `recordStatus.planned`, `.inProgress`, `.check`, `.completed`, `.
 
 `npm install` (once; fetches the pinned `material-icon-theme` the bundled theme is built from),
 `npm test` (plain Node tests of `core.js`), `npm run build-theme` (rebuilds `theme/`; `vsce
-package` runs it too).
+package` runs it too), `npm run showcase` (after `build-theme`: regenerates `docs/showcase.md`,
+`docs/showcase.html`, their images and the README pictures `docs/hero-*.png`; needs Chrome or
+Edge for the PNGs). After changing a look, regenerate and commit the showcase with it.
 
 ## Licence
 

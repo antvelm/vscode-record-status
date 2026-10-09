@@ -36,11 +36,11 @@ const DEFAULT_PROFILES = {
     spec: {
         include: ["**/spec/*.md"],
         statuses: {
-            draft:      { icon: "architecture", iconColor: "gray-500",      nameColor: "recordStatus.planned",   glyph: "·" },
-            review:     { icon: "architecture", iconColor: "amber-500",     nameColor: "recordStatus.proposed",  glyph: "?" },
-            accepted:   { icon: "architecture", iconColor: "green-500",     nameColor: "recordStatus.completed", glyph: "✓" },
-            living:     { icon: "architecture", iconColor: "blue-500",      nameColor: "recordStatus.living",    glyph: "●" },
-            superseded: { icon: "architecture", iconColor: "gray-700",      nameColor: "recordStatus.dropped",   glyph: "–" },
+            draft:      { icon: "document",     iconColor: "gray-500",      nameColor: "recordStatus.planned",   glyph: "·" },
+            review:     { icon: "document",     iconColor: "amber-500",     nameColor: "recordStatus.proposed",  glyph: "?" },
+            accepted:   { icon: "document",     iconColor: "green-500",     nameColor: "recordStatus.completed", glyph: "✓" },
+            living:     { icon: "document",     iconColor: "blue-500",      nameColor: "recordStatus.living",    glyph: "●" },
+            superseded: { icon: "document",     iconColor: "gray-700",      nameColor: "recordStatus.dropped",   glyph: "–" },
             explainer:  { icon: "instructions", iconColor: "blue-gray-500", nameColor: "",                       glyph: "" },
         },
     },
@@ -53,6 +53,48 @@ const DEFAULT_PROFILES = {
         },
     },
 };
+
+/**
+ * Name-colour presets (`recordStatus.colorPreset`). A look names a colour slot as
+ * `recordStatus.<slot>`; a preset maps each slot to a theme colour id, or to "" for no colour.
+ * "default" keeps the extension's own colours, which `workbench.colorCustomizations` can retune.
+ */
+const COLOR_SLOTS = ["planned", "inProgress", "check", "completed", "blocked", "living", "dropped", "proposed"];
+const COLOR_PRESETS = {
+    default: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.${s}`])),
+    // Follows the active colour theme's own palette.
+    theme: {
+        planned: "descriptionForeground", inProgress: "charts.yellow", check: "terminal.ansiCyan", completed: "charts.green",
+        blocked: "charts.red", living: "charts.blue", dropped: "disabledForeground", proposed: "charts.purple",
+    },
+    // The colours git uses in the Explorer: modified, added, deleted, ignored.
+    git: {
+        planned: "", inProgress: "gitDecoration.modifiedResourceForeground", check: "terminal.ansiCyan",
+        completed: "gitDecoration.addedResourceForeground", blocked: "gitDecoration.deletedResourceForeground",
+        living: "gitDecoration.submoduleResourceForeground", dropped: "gitDecoration.ignoredResourceForeground",
+        proposed: "charts.purple",
+    },
+    // Colour only what needs attention: active, check, blocked, open or in review.
+    quiet: {
+        planned: "", inProgress: "recordStatus.inProgress", check: "recordStatus.check", completed: "",
+        blocked: "recordStatus.blocked", living: "", dropped: "recordStatus.dropped", proposed: "recordStatus.proposed",
+    },
+    none: Object.fromEntries(COLOR_SLOTS.map((s) => [s, ""])),
+};
+
+/**
+ * The theme colour id a look's `nameColor` resolves to, or "" for none. `recordStatus.<slot>`
+ * goes through `overrides[slot]` (`recordStatus.colors`) first, then the preset; any other id is
+ * used as it is.
+ */
+function resolveNameColor(nameColor, preset = "default", overrides = {}) {
+    if (!nameColor) { return ""; }
+    const m = /^recordStatus\.(\w+)$/.exec(nameColor);
+    if (!m || !COLOR_SLOTS.includes(m[1])) { return nameColor; }
+    if (overrides && typeof overrides[m[1]] === "string") { return overrides[m[1]]; }
+    const table = COLOR_PRESETS[preset] || COLOR_PRESETS.default;
+    return table[m[1]];
+}
 
 /** Minimal glob -> RegExp for `*`, `**`, `?` and `[...]`, matched against a forward-slash path. */
 function globToRegExp(glob) {
@@ -270,6 +312,8 @@ function rollupFolders(relPath, folderMatchers) {
 
 module.exports = {
     CLONE_PREFIX,
+    COLOR_PRESETS,
+    COLOR_SLOTS,
     DEFAULT_PATTERN,
     DEFAULT_PROFILES,
     globToRegExp,
@@ -281,6 +325,7 @@ module.exports = {
     iconGroups,
     buildClones,
     resolveColor,
+    resolveNameColor,
     recolorSvg,
     buildThemeManifest,
     rollup,

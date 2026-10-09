@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Name-colour presets (`recordStatus.colorPreset`: `default`, `theme`, `git`, `quiet`, `none`)
+  and per-slot overrides (`recordStatus.colors`).
+- Specs use Material's `document` icon (a page with lines of text) instead of `architecture`.
+- The showcase page has pickers for the colour preset, the spec icon and the decision icon.
+
 ## 0.3.0
 
 - **Profiles** (`recordStatus.profiles`): kinds of record, each with its own globs, status pattern

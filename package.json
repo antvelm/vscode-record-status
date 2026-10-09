@@ -81,6 +81,30 @@
                     "default": "auto",
                     "description": "How a record's status reaches its Explorer icon."
                 },
+                "recordStatus.colorPreset": {
+                    "type": "string",
+                    "enum": ["default", "theme", "git", "quiet", "none"],
+                    "enumDescriptions": [
+                        "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
+                        "Follow the active colour theme: its chart and terminal colours.",
+                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped).",
+                        "Colour only what needs attention: active, check, blocked, open or in review, dropped.",
+                        "No name colours; icons and badges only."
+                    ],
+                    "default": "default",
+                    "description": "Which colours file and folder names take for each status."
+                },
+                "recordStatus.colors": {
+                    "type": "object",
+                    "default": {},
+                    "markdownDescription": "Per-slot overrides on top of `colorPreset`: slot → theme colour id, or `\"\"` for no colour. Slots: `planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`. Example: `{ \"completed\": \"charts.green\", \"planned\": \"\" }`. For an exact hex colour, keep the slot on its `recordStatus.<slot>` id and set that id in `workbench.colorCustomizations`.",
+                    "properties": {
+                        "planned": { "type": "string" }, "inProgress": { "type": "string" }, "check": { "type": "string" },
+                        "completed": { "type": "string" }, "blocked": { "type": "string" }, "living": { "type": "string" },
+                        "dropped": { "type": "string" }, "proposed": { "type": "string" }
+                    },
+                    "additionalProperties": false
+                },
                 "recordStatus.rollup": {
                     "type": "object",
                     "default": {},

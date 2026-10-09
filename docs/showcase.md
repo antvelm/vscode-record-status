@@ -57,11 +57,11 @@ as `material`).
 
 | Icon | Word | Meaning | Icon (Material name, colour) | Name colour dark / light | Glyph (badge mode) | Roll-up |
 |---|---|---|---|---|---|---|
-| <img src="showcase/icon-spec-draft.svg" width="20"> | `draft` | Being written. | `architecture`, `gray-500` | <img src="showcase/swatch-8a8f98.svg" width="12" height="12"> `#8a8f98` / <img src="showcase/swatch-6b7280.svg" width="12" height="12"> `#6b7280` | `·` | — |
-| <img src="showcase/icon-spec-review.svg" width="20"> | `review` | Ready for the developer to read. | `architecture`, `amber-500` | <img src="showcase/swatch-5aa0ff.svg" width="12" height="12"> `#5aa0ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `?` | — |
-| <img src="showcase/icon-spec-accepted.svg" width="20"> | `accepted` | Signed off, not built yet. | `architecture`, `green-500` | <img src="showcase/swatch-3cb371.svg" width="12" height="12"> `#3cb371` / <img src="showcase/swatch-15803d.svg" width="12" height="12"> `#15803d` | `✓` | — |
-| <img src="showcase/icon-spec-living.svg" width="20"> | `living` | Being built; kept current. | `architecture`, `blue-500` | <img src="showcase/swatch-6cb6ff.svg" width="12" height="12"> `#6cb6ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `●` | — |
-| <img src="showcase/icon-spec-superseded.svg" width="20"> | `superseded` | Replaced. | `architecture`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
+| <img src="showcase/icon-spec-draft.svg" width="20"> | `draft` | Being written. | `document`, `gray-500` | <img src="showcase/swatch-8a8f98.svg" width="12" height="12"> `#8a8f98` / <img src="showcase/swatch-6b7280.svg" width="12" height="12"> `#6b7280` | `·` | — |
+| <img src="showcase/icon-spec-review.svg" width="20"> | `review` | Ready for the developer to read. | `document`, `amber-500` | <img src="showcase/swatch-5aa0ff.svg" width="12" height="12"> `#5aa0ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `?` | — |
+| <img src="showcase/icon-spec-accepted.svg" width="20"> | `accepted` | Signed off, not built yet. | `document`, `green-500` | <img src="showcase/swatch-3cb371.svg" width="12" height="12"> `#3cb371` / <img src="showcase/swatch-15803d.svg" width="12" height="12"> `#15803d` | `✓` | — |
+| <img src="showcase/icon-spec-living.svg" width="20"> | `living` | Being built; kept current. | `document`, `blue-500` | <img src="showcase/swatch-6cb6ff.svg" width="12" height="12"> `#6cb6ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `●` | — |
+| <img src="showcase/icon-spec-superseded.svg" width="20"> | `superseded` | Replaced. | `document`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
 | <img src="showcase/icon-spec-explainer.svg" width="20"> | `explainer` | Explains part of another spec. | `instructions`, `blue-gray-500` | — | — | — |
 
 ### Reference — `**/assessments/*.md`
@@ -110,6 +110,44 @@ Name colour only.
 |---|---|
 | <img src="showcase/mode-off-dark.svg" alt="off mode, dark theme" width="340"> | <img src="showcase/mode-off-light.svg" alt="off mode, light theme" width="340"> |
 
+### Name colours: `recordStatus.colorPreset`
+
+The same folder with each preset. `default` is Record Status's own colours. `theme` and
+`git` borrow colours from the active colour theme, so they change with it (shown here as
+VS Code's Dark and Light Modern draw them). `recordStatus.colors` overrides single slots, and
+`workbench.colorCustomizations` sets exact hex values for the `recordStatus.*` ids.
+
+#### `default`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-default-dark.svg" alt="default colour preset, dark theme" width="340"> | <img src="showcase/preset-default-light.svg" alt="default colour preset, light theme" width="340"> |
+
+#### `theme`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-theme-dark.svg" alt="theme colour preset, dark theme" width="340"> | <img src="showcase/preset-theme-light.svg" alt="theme colour preset, light theme" width="340"> |
+
+#### `git`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-git-dark.svg" alt="git colour preset, dark theme" width="340"> | <img src="showcase/preset-git-light.svg" alt="git colour preset, light theme" width="340"> |
+
+#### `quiet`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-quiet-dark.svg" alt="quiet colour preset, dark theme" width="340"> | <img src="showcase/preset-quiet-light.svg" alt="quiet colour preset, light theme" width="340"> |
+
+#### `none`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-none-dark.svg" alt="none colour preset, dark theme" width="340"> | <img src="showcase/preset-none-light.svg" alt="none colour preset, light theme" width="340"> |
+
+
 ## 3. Folder roll-up
 
 The folder above a `tasks/` folder shows the share of its tasks that are done: `0`…`99`,
@@ -142,13 +180,18 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
 
 ## 6. Questions to approve
 
-1. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
-   lock); decisions are always a key, specs always the architecture icon. Keep, or give tasks
-   one shape too?
-2. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
-3. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
+1. **Decision icon:** a key now. Alternatives on the [interactive page](showcase.html)
+   (Decision icon picker): `routing` (a signpost: "which way?"), `git` (a fork),
+   `chess`, `tune`, `label`, `certificate`, `pipeline`.
+2. **Spec icon:** now `document` (a page with lines of text). Alternatives on the page:
+   `log`, `contributing`, `toc`, `architecture` (the old one).
+3. **Default colour preset:** `default`, or one of `theme`, `git`, `quiet`, `none`?
+4. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+   lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
+5. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
+6. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
    or should `dropped` get its own shape?
-4. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
+7. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
    Make the name amber too, or keep blue for "waiting on someone"?
-5. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
-6. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?
+8. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
+9. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?

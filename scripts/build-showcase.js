@@ -21,6 +21,32 @@ if (!fs.existsSync(path.join(THEME, "material-icons.base.json"))) {
 }
 const manifest = JSON.parse(fs.readFileSync(path.join(THEME, "material-icons.base.json"), "utf8"));
 const COLORS = Object.fromEntries(pkg.contributes.colors.map((c) => [c.id, c.defaults]));
+// Theme colours the presets use, as VS Code's Dark Modern and Light Modern themes draw them
+// (approximate; a real colour theme changes them).
+const THEME_PREVIEW = {
+    "descriptionForeground": { dark: "#9d9d9d", light: "#616161" },
+    "disabledForeground": { dark: "#6e6e6e", light: "#a8a8a8" },
+    "charts.yellow": { dark: "#cca700", light: "#bf8803" },
+    "charts.green": { dark: "#89d185", light: "#388a34" },
+    "charts.red": { dark: "#f14c4c", light: "#e51400" },
+    "charts.blue": { dark: "#3794ff", light: "#1a85ff" },
+    "charts.purple": { dark: "#b180d7", light: "#652d90" },
+    "terminal.ansiCyan": { dark: "#11a8cd", light: "#0598bc" },
+    "gitDecoration.modifiedResourceForeground": { dark: "#e2c08d", light: "#895503" },
+    "gitDecoration.addedResourceForeground": { dark: "#81b88b", light: "#587c0c" },
+    "gitDecoration.deletedResourceForeground": { dark: "#c74e39", light: "#ad0707" },
+    "gitDecoration.submoduleResourceForeground": { dark: "#8db9e2", light: "#1258a7" },
+    "gitDecoration.ignoredResourceForeground": { dark: "#8c8c8c", light: "#8e8e90" },
+};
+/** Preview hex of a look's name colour under a preset, or null for none. */
+function nameHex(nameColor, skin, preset = "default") {
+    const id = core.resolveNameColor(nameColor, preset);
+    const c = COLORS[id] || THEME_PREVIEW[id];
+    return id && c ? c[skin] : null;
+}
+// Icons the showcase page offers as alternatives for specs and decisions.
+const SPEC_ICONS = ["document", "log", "contributing", "toc", "architecture"];
+const DECISION_ICONS = ["key", "routing", "git", "chess", "tune", "label", "certificate", "pipeline"];
 
 const SKINS = {
     dark: { bg: "#181818", fg: "#cccccc", dim: "#8b8b8b", guide: "#404040", tipBg: "#252526", tipBorder: "#454545" },
@@ -71,7 +97,7 @@ function esc(s) {
  * Rows: { depth, name, folder?: true, open?, profile?, status?, rollup?: {done, counted}, note? }.
  * `mode` is how icons are shown: bundled, material, badge, off.
  */
-function explorer(rows, mode, skin, { tooltip } = {}) {
+function explorer(rows, mode, skin, { tooltip, preset = "default" } = {}) {
     const s = SKINS[skin];
     const records = rows.filter((r) => r.profile).map((r) => ({ fsPath: `${r.dir || ""}/${r.name}`, profile: r.profile, status: r.status }));
     const groups = core.iconGroups(records, byName);
@@ -94,7 +120,7 @@ function explorer(rows, mode, skin, { tooltip } = {}) {
             icon = placeIcon(folderIcon(r.name, r.open), x + 14, mid - 8);
             if (r.rollup) {
                 badge = core.rollupBadge(r.rollup) || "";
-                if (r.rollup.done >= r.rollup.counted && r.rollup.counted) { label = COLORS["recordStatus.completed"][skin]; }
+                if (r.rollup.done >= r.rollup.counted && r.rollup.counted) { label = nameHex("recordStatus.completed", skin, preset) || label; }
             }
         } else {
             const look = r.profile ? core.lookOf({ profile: r.profile, status: r.status }, byName) : undefined;
@@ -106,7 +132,7 @@ function explorer(rows, mode, skin, { tooltip } = {}) {
                 icon = placeIcon(fileIcon(r.name), x + 14, mid - 8);
             }
             if (look && mode !== "none") {
-                if (look.nameColor) { label = COLORS[look.nameColor] ? COLORS[look.nameColor][skin] : label; }
+                label = nameHex(look.nameColor, skin, preset) || label;
                 badge = look.badge || (mode === "badge" ? look.glyph || "" : "");
             }
         }
@@ -228,7 +254,20 @@ function htmlData() {
     file(1, "README.md", "spec", "review");
     folder(0, "assessments", true);
     file(1, "Refactor_Assessment.md", "reference", "assessment");
-    return { icons, profiles: core.DEFAULT_PROFILES, colors: COLORS, tree, version: pkg.version };
+    const raw = {};
+    for (const name of [...SPEC_ICONS, ...DECISION_ICONS]) { raw[name] = clean(iconSvg(name)); }
+    const palette = {};
+    for (const p of Object.values(core.DEFAULT_PROFILES)) {
+        for (const look of Object.values(p.statuses)) { palette[look.iconColor] = core.resolveColor(look.iconColor); }
+    }
+    return {
+        icons, raw, palette, tree, version: pkg.version,
+        profiles: core.DEFAULT_PROFILES,
+        colors: { ...THEME_PREVIEW, ...COLORS },
+        presets: core.COLOR_PRESETS,
+        specIcons: SPEC_ICONS,
+        decisionIcons: DECISION_ICONS,
+    };
 }
 
 const CHROMES = [
@@ -365,6 +404,23 @@ Name colour only.
     write("mode-off", tree, "off");
     md += pair("mode-off", "off mode");
 
+    md += `
+### Name colours: \`recordStatus.colorPreset\`
+
+The same folder with each preset. \`default\` is Record Status's own colours. \`theme\` and
+\`git\` borrow colours from the active colour theme, so they change with it (shown here as
+VS Code's Dark and Light Modern draw them). \`recordStatus.colors\` overrides single slots, and
+\`workbench.colorCustomizations\` sets exact hex values for the \`recordStatus.*\` ids.
+
+`;
+    for (const preset of Object.keys(core.COLOR_PRESETS)) {
+        write(`preset-${preset}`, tree, "bundled", { preset });
+        md += `#### \`${preset}\`
+
+${pair(`preset-${preset}`, `${preset} colour preset`)}
+`;
+    }
+
     // 3. roll-up
     md += `
 ## 3. Folder roll-up
@@ -424,16 +480,21 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
     md += `
 ## 6. Questions to approve
 
-1. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
-   lock); decisions are always a key, specs always the architecture icon. Keep, or give tasks
-   one shape too?
-2. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
-3. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
+1. **Decision icon:** a key now. Alternatives on the [interactive page](showcase.html)
+   (Decision icon picker): \`routing\` (a signpost: "which way?"), \`git\` (a fork),
+   \`chess\`, \`tune\`, \`label\`, \`certificate\`, \`pipeline\`.
+2. **Spec icon:** now \`document\` (a page with lines of text). Alternatives on the page:
+   \`log\`, \`contributing\`, \`toc\`, \`architecture\` (the old one).
+3. **Default colour preset:** \`default\`, or one of \`theme\`, \`git\`, \`quiet\`, \`none\`?
+4. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+   lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
+5. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
+6. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
    or should \`dropped\` get its own shape?
-4. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
+7. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
    Make the name amber too, or keep blue for "waiting on someone"?
-5. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
-6. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
+8. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
+9. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
 `;
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.md"), md);
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.html"), showcaseHtml(htmlData()));

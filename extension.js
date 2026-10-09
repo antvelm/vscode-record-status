@@ -44,6 +44,8 @@ function settings() {
         profiles,
         byName,
         iconMode,
+        colorPreset: config.get("colorPreset") || "default",
+        colorOverrides: config.get("colors") || {},
         rollup: {
             enabled: rollup.enabled !== false,
             profiles: rollup.profiles || ["task"],
@@ -180,15 +182,21 @@ class RecordStatus {
         let badge = look.badge || undefined;
         if (!badge && this._mode === "badge" && look.glyph) { badge = look.glyph; }
         const tooltip = `${titleCase(record.profile)}: ${titleCase(record.status)}`;
-        return new vscode.FileDecoration(badge, tooltip, look.nameColor ? new vscode.ThemeColor(look.nameColor) : undefined);
+        return new vscode.FileDecoration(badge, tooltip, this.themeColor(look.nameColor));
     }
 
     folderDecoration(counts) {
         const badge = core.rollupBadge(counts);
         if (!badge) { return undefined; }
         const complete = counts.done >= counts.counted;
-        const color = complete && this._settings.rollup.nameColor ? new vscode.ThemeColor(this._settings.rollup.nameColor) : undefined;
+        const color = complete ? this.themeColor(this._settings.rollup.nameColor) : undefined;
         return new vscode.FileDecoration(badge, `${counts.done} of ${counts.counted} done`, color);
+    }
+
+    /** A look's name colour through the colour preset and overrides, as a ThemeColor or undefined. */
+    themeColor(nameColor) {
+        const id = core.resolveNameColor(nameColor, this._settings.colorPreset, this._settings.colorOverrides);
+        return id ? new vscode.ThemeColor(id) : undefined;
     }
 
     scheduleIcons() {

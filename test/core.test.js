@@ -149,3 +149,19 @@ test("default looks use icons and colours that exist", () => {
         }
     }
 });
+
+test("resolveNameColor: presets, overrides, other ids pass through", () => {
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed"), "recordStatus.completed");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "theme"), "charts.green");
+    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "quiet"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "none"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "git", { blocked: "errorForeground" }), "errorForeground");
+    assert.strictEqual(core.resolveNameColor("recordStatus.planned", "default", { planned: "" }), "");
+    assert.strictEqual(core.resolveNameColor("charts.red", "none"), "charts.red");
+    assert.strictEqual(core.resolveNameColor("recordStatus.unknown", "none"), "recordStatus.unknown");
+    assert.strictEqual(core.resolveNameColor("", "theme"), "");
+    assert.strictEqual(core.resolveNameColor("recordStatus.check", "nonsense"), "recordStatus.check");
+    for (const [name, table] of Object.entries(core.COLOR_PRESETS)) {
+        assert.deepStrictEqual(Object.keys(table).sort(), [...core.COLOR_SLOTS].sort(), name);
+    }
+});

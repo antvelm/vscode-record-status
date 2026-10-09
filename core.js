@@ -57,11 +57,15 @@ const DEFAULT_PROFILES = {
 /**
  * Name-colour presets (`recordStatus.colorPreset`). A look names a colour slot as
  * `recordStatus.<slot>`; a preset maps each slot to a theme colour id, or to "" for no colour.
- * "default" keeps the extension's own colours, which `workbench.colorCustomizations` can retune.
+ * "classic" is the extension's own colours, which `workbench.colorCustomizations` can retune; "git"
+ * is the default.
  */
 const COLOR_SLOTS = ["planned", "inProgress", "check", "completed", "blocked", "living", "dropped", "proposed"];
+const DEFAULT_COLOR_PRESET = "git";
 const COLOR_PRESETS = {
-    default: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.${s}`])),
+    classic: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.${s}`])),
+    // The classic colours with lower contrast, a third of the way toward the background.
+    soft: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.soft.${s}`])),
     // Follows the active colour theme's own palette.
     theme: {
         planned: "descriptionForeground", inProgress: "charts.yellow", check: "terminal.ansiCyan", completed: "charts.green",
@@ -87,16 +91,55 @@ const COLOR_PRESETS = {
 };
 
 /**
+ * Presets that also recolour the icons: slot -> { dark, light } icon colour (dark and light colour
+ * themes). Looks without a colour slot (explainers, reference) take `other`.
+ */
+const ICON_PRESETS = {
+    monochrome: {
+        planned: { dark: "#757575", light: "#9e9e9e" },
+        inProgress: { dark: "#eeeeee", light: "#212121" },
+        check: { dark: "#eeeeee", light: "#212121" },
+        blocked: { dark: "#eeeeee", light: "#212121" },
+        proposed: { dark: "#eeeeee", light: "#212121" },
+        completed: { dark: "#9e9e9e", light: "#616161" },
+        living: { dark: "#9e9e9e", light: "#616161" },
+        dropped: { dark: "#555555", light: "#bdbdbd" },
+        other: { dark: "#9e9e9e", light: "#616161" },
+    },
+};
+
+/**
+ * Profiles (by name) with the colour preset's icon colours applied: each look gets `iconColor`
+ * (dark themes) and `iconColorLight` (light themes). Presets without icon colours return the
+ * profiles unchanged.
+ */
+function presetLooks(byName, preset) {
+    const table = ICON_PRESETS[preset];
+    if (!table) { return byName; }
+    const out = {};
+    for (const [name, p] of Object.entries(byName)) {
+        const statuses = {};
+        for (const [word, look] of Object.entries(p.statuses)) {
+            const m = /^recordStatus\.(\w+)$/.exec(look.nameColor || "");
+            const c = (m && table[m[1]]) || table.other;
+            statuses[word] = { ...look, iconColor: c.dark, iconColorLight: c.light };
+        }
+        out[name] = { ...p, statuses };
+    }
+    return out;
+}
+
+/**
  * The theme colour id a look's `nameColor` resolves to, or "" for none. `recordStatus.<slot>`
  * goes through `overrides[slot]` (`recordStatus.colors`) first, then the preset; any other id is
  * used as it is.
  */
-function resolveNameColor(nameColor, preset = "default", overrides = {}) {
+function resolveNameColor(nameColor, preset = DEFAULT_COLOR_PRESET, overrides = {}) {
     if (!nameColor) { return ""; }
     const m = /^recordStatus\.(\w+)$/.exec(nameColor);
     if (!m || !COLOR_SLOTS.includes(m[1])) { return nameColor; }
     if (overrides && typeof overrides[m[1]] === "string") { return overrides[m[1]]; }
-    const table = COLOR_PRESETS[preset] || COLOR_PRESETS.default;
+    const table = COLOR_PRESETS[preset] || COLOR_PRESETS[DEFAULT_COLOR_PRESET];
     return table[m[1]];
 }
 
@@ -226,6 +269,7 @@ function buildClones(current, groups) {
         const g = groups.byId[id];
         const clone = { name: id, base: g.look.icon, fileNames: g.names };
         if (g.look.iconColor) { clone.color = g.look.iconColor; }
+        if (g.look.iconColorLight) { clone.lightColor = g.look.iconColorLight; }
         return clone;
     });
     return kept.concat(ours);
@@ -246,6 +290,19 @@ function recolorSvg(svg, hex) {
         .replace(/(fill|stroke):\s*(?!none)(?!currentColor)[^;"]+/gi, `$1:${hex}`);
 }
 
+/** An SVG with every hex colour turned into the grey of the same luminance. */
+function greySvg(svg) {
+    return svg.replace(/#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-f])/gi, (_, hex) => {
+        const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+        const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+        const y = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b).toString(16).padStart(2, "0");
+        return `#${y}${y}${y}`;
+    });
+}
+
+/** Presets whose bundled theme shows every icon, not only the status icons, in greyscale. */
+const GREYSCALE_PRESETS = ["monochrome"];
+
 /**
  * The bundled icon theme: Material Icon Theme's manifest plus one icon definition per
  * (profile, status) in use and a file-name entry per record name. `svgPathFor(id)` is the path of
@@ -256,13 +313,20 @@ function buildThemeManifest(base, groups, svgPathFor) {
     manifest.iconDefinitions = manifest.iconDefinitions || {};
     manifest.fileNames = manifest.fileNames || {};
     for (const id of Object.keys(groups.byId).sort()) {
+        const g = groups.byId[id];
         manifest.iconDefinitions[id] = { iconPath: svgPathFor(id) };
-        for (const name of groups.byId[id].names) {
+        // A look with its own light-theme colour gets a second icon, used by light themes.
+        const lightId = g.look.iconColorLight ? `${id}_light` : id;
+        if (lightId !== id) {
+            manifest.iconDefinitions[lightId] = { iconPath: svgPathFor(lightId) };
+            manifest.light = manifest.light || {};
+            manifest.light.fileNames = manifest.light.fileNames || {};
+        }
+        for (const name of g.names) {
             manifest.fileNames[name] = id;
             // Light and high-contrast sections override some names; ours must win there too.
-            for (const section of ["light", "highContrast"]) {
-                if (manifest[section] && manifest[section].fileNames) { manifest[section].fileNames[name] = id; }
-            }
+            if (manifest.light && manifest.light.fileNames) { manifest.light.fileNames[name] = lightId; }
+            if (manifest.highContrast && manifest.highContrast.fileNames) { manifest.highContrast.fileNames[name] = id; }
         }
     }
     return manifest;
@@ -317,7 +381,10 @@ function rollupFolders(relPath, folderMatchers) {
 module.exports = {
     CLONE_PREFIX,
     COLOR_PRESETS,
+    ICON_PRESETS,
+    GREYSCALE_PRESETS,
     COLOR_SLOTS,
+    DEFAULT_COLOR_PRESET,
     DEFAULT_PATTERN,
     DEFAULT_PROFILES,
     globToRegExp,
@@ -330,7 +397,9 @@ module.exports = {
     buildClones,
     resolveColor,
     resolveNameColor,
+    presetLooks,
     recolorSvg,
+    greySvg,
     buildThemeManifest,
     rollup,
     rollupBadge,

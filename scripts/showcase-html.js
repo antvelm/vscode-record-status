@@ -107,7 +107,7 @@ const MODE_NOTES = {
   badge: "<h3>badge</h3><p>Any icon theme. Files keep their own icon; a glyph after the name, in the name colour, carries the status.</p>",
   off: "<h3>off</h3><p>Name colour only.</p>",
 };
-const state = { ex: "dark", mode: "bundled", preset: "default", specIcon: DATA.specIcons[0], decisionIcon: DATA.decisionIcons[0],
+const state = { ex: "dark", mode: "bundled", preset: DATA.defaultPreset, specIcon: DATA.specIcons[0], decisionIcon: DATA.decisionIcons[0],
   tree: DATA.tree.map((r) => ({ ...r })) };
 // The default looks name an icon per status; the pickers swap the spec and decision shapes.
 const DEFAULT_ICON = { spec: DATA.profiles.spec.statuses.draft.icon, decision: DATA.profiles.decision.statuses.open.icon };
@@ -135,11 +135,29 @@ function recolor(svg, hex) {
   return svg.replace(/(fill|stroke)="(?!none")(?!currentColor")[^"]*"/gi, '$1="' + hex + '"')
             .replace(/(fill|stroke):[ ]*(?!none)(?!currentColor)[^;"]+/gi, "$1:" + hex);
 }
+/** The extension's greySvg: every hex colour to the grey of the same luminance. */
+function grey(svg) {
+  return svg.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/g, (_, hex) => {
+    const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+    const y = Math.round(0.2126 * parseInt(full.slice(0, 2), 16) + 0.7152 * parseInt(full.slice(2, 4), 16) + 0.0722 * parseInt(full.slice(4, 6), 16));
+    const h = y.toString(16).padStart(2, "0");
+    return "#" + h + h + h;
+  });
+}
+/** A folder or plain file icon; greyscale under presets that grey the whole theme. */
+function themeIcon(key) { return DATA.greyscalePresets.includes(state.preset) ? grey(DATA.icons[key]) : DATA.icons[key]; }
 /** The status icon of (profile, status), with the picked shape for specs and decisions. */
 function statusIcon(profile, status) {
   const l = DATA.profiles[profile].statuses[status];
   const pick = profile === "spec" && l.icon === DEFAULT_ICON.spec ? state.specIcon
     : profile === "decision" && l.icon === DEFAULT_ICON.decision ? state.decisionIcon : null;
+  const ip = DATA.iconPresets[state.preset];
+  if (ip) {
+    // Presets that recolour icons too (monochrome): one colour per slot and theme.
+    const m = /^recordStatus[.]([A-Za-z]+)$/.exec(l.nameColor || "");
+    const c = (m && ip[m[1]]) || ip.other;
+    return recolor(DATA.raw[pick || l.icon], c[state.ex]);
+  }
   return pick ? recolor(DATA.raw[pick], DATA.palette[l.iconColor]) : DATA.icons["status:" + profile + "/" + status];
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -176,7 +194,7 @@ function render() {
   state.tree.forEach((r, i) => {
     let icon, color = null, badge = "", tip = "";
     if (r.folder) {
-      icon = DATA.icons[r.open ? r.iconOpen : r.iconClosed];
+      icon = themeIcon(r.open ? r.iconOpen : r.iconClosed);
       const c = roll[r.id];
       if (c && c.counted) {
         badge = c.done >= c.counted ? "✓" : String(Math.floor(100 * c.done / c.counted));
@@ -185,7 +203,7 @@ function render() {
       }
     } else {
       const l = look(r);
-      icon = DATA.icons[r.plainIcon];
+      icon = themeIcon(r.plainIcon);
       if (l) {
         if (iconMode && l.icon && !shared.has(r.name.toLowerCase())) icon = statusIcon(r.profile, r.status);
         color = nameColor(l.nameColor);

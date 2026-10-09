@@ -112,16 +112,24 @@ Name colour only.
 
 ### Name colours: `recordStatus.colorPreset`
 
-The same folder with each preset. `default` is Record Status's own colours. `theme` and
-`git` borrow colours from the active colour theme, so they change with it (shown here as
-VS Code's Dark and Light Modern draw them). `recordStatus.colors` overrides single slots, and
+The same folder with each preset. `git` (the default) and `theme` borrow colours from the
+active colour theme, so they change with it (shown here as VS Code's Dark and Light Modern draw
+them). `classic` is Record Status's own colours, `soft` the same with lower contrast.
+`monochrome` turns the icons grey too: in bundled mode the whole icon theme; with Material
+Icon Theme, set `material-icon-theme.saturation` to 0. `recordStatus.colors` overrides single slots, and
 `workbench.colorCustomizations` sets exact hex values for the `recordStatus.*` ids.
 
-#### `default`
+#### `classic`
 
 | Dark | Light |
 |---|---|
-| <img src="showcase/preset-default-dark.svg" alt="default colour preset, dark theme" width="340"> | <img src="showcase/preset-default-light.svg" alt="default colour preset, light theme" width="340"> |
+| <img src="showcase/preset-classic-dark.svg" alt="classic colour preset, dark theme" width="340"> | <img src="showcase/preset-classic-light.svg" alt="classic colour preset, light theme" width="340"> |
+
+#### `soft`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-soft-dark.svg" alt="soft colour preset, dark theme" width="340"> | <img src="showcase/preset-soft-light.svg" alt="soft colour preset, light theme" width="340"> |
 
 #### `theme`
 
@@ -193,17 +201,15 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
 ## 6. Questions to approve
 
 Decided 2026-10-10: specs use `document` (a page with lines of text), decisions use
-`routing` (a signpost: "which way?"). Other shapes can still be tried with the pickers on the
-[interactive page](showcase.html).
+`routing` (a signpost: "which way?"), and the default colour preset is `git`. Other shapes
+and presets can still be tried with the pickers on the [interactive page](showcase.html).
 
-1. **Default colour preset:** `default`, or one of `theme`, `git`, `quiet`,
-   `monochrome`, `dark`, `none`?
-2. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+1. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
    lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
-3. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
-4. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
+2. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
+3. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
    or should `dropped` get its own shape?
-5. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
-   Make the name amber too, or keep blue for "waiting on someone"?
-6. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
-7. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?
+4. **Name colours:** with `git`, open decisions and specs in review are *purple* names with
+   *amber* icons, and `planned` has no name colour. Keep?
+5. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
+6. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?

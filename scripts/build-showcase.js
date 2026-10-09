@@ -39,7 +39,7 @@ const THEME_PREVIEW = {
     "gitDecoration.ignoredResourceForeground": { dark: "#8c8c8c", light: "#8e8e90" },
 };
 /** Preview hex of a look's name colour under a preset, or null for none. */
-function nameHex(nameColor, skin, preset = "default") {
+function nameHex(nameColor, skin, preset = core.DEFAULT_COLOR_PRESET) {
     const id = core.resolveNameColor(nameColor, preset);
     const c = COLORS[id] || THEME_PREVIEW[id];
     return id && c ? c[skin] : null;
@@ -97,8 +97,11 @@ function esc(s) {
  * Rows: { depth, name, folder?: true, open?, profile?, status?, rollup?: {done, counted}, note? }.
  * `mode` is how icons are shown: bundled, material, badge, off.
  */
-function explorer(rows, mode, skin, { tooltip, preset = "default" } = {}) {
+function explorer(rows, mode, skin, { tooltip, preset = core.DEFAULT_COLOR_PRESET } = {}) {
     const s = SKINS[skin];
+    const looks = core.presetLooks(byName, preset);
+    const greyAll = core.GREYSCALE_PRESETS.includes(preset);
+    const plain = (svgEl) => (greyAll ? core.greySvg(svgEl) : svgEl);
     const records = rows.filter((r) => r.profile).map((r) => ({ fsPath: `${r.dir || ""}/${r.name}`, profile: r.profile, status: r.status }));
     const groups = core.iconGroups(records, byName);
     const shared = new Set(groups.shared);
@@ -117,19 +120,19 @@ function explorer(rows, mode, skin, { tooltip, preset = "default" } = {}) {
         if (r.folder) {
             const chevron = r.open ? `M${x + 1} ${mid - 2} l4 4 l4 -4` : `M${x + 3} ${mid - 4} l4 4 l-4 4`;
             body += `<path d="${chevron}" fill="none" stroke="${s.fg}" stroke-width="1.2"/>`;
-            icon = placeIcon(folderIcon(r.name, r.open), x + 14, mid - 8);
+            icon = plain(placeIcon(folderIcon(r.name, r.open), x + 14, mid - 8));
             if (r.rollup) {
                 badge = core.rollupBadge(r.rollup) || "";
                 if (r.rollup.done >= r.rollup.counted && r.rollup.counted) { label = nameHex("recordStatus.completed", skin, preset) || label; }
             }
         } else {
-            const look = r.profile ? core.lookOf({ profile: r.profile, status: r.status }, byName) : undefined;
+            const look = r.profile ? core.lookOf({ profile: r.profile, status: r.status }, looks) : undefined;
             const iconMode = mode === "bundled" || mode === "material";
             const ownName = r.name.toLowerCase();
             if (look && iconMode && look.icon && !shared.has(ownName)) {
-                icon = placeIcon(look.icon, x + 14, mid - 8, look.iconColor);
+                icon = placeIcon(look.icon, x + 14, mid - 8, skin === "light" && look.iconColorLight ? look.iconColorLight : look.iconColor);
             } else {
-                icon = placeIcon(fileIcon(r.name), x + 14, mid - 8);
+                icon = plain(placeIcon(fileIcon(r.name), x + 14, mid - 8));
             }
             if (look && mode !== "none") {
                 label = nameHex(look.nameColor, skin, preset) || label;
@@ -255,7 +258,8 @@ function htmlData() {
     folder(0, "assessments", true);
     file(1, "Refactor_Assessment.md", "reference", "assessment");
     const raw = {};
-    for (const name of [...SPEC_ICONS, ...DECISION_ICONS]) { raw[name] = clean(iconSvg(name)); }
+    const statusIcons = Object.values(core.DEFAULT_PROFILES).flatMap((p) => Object.values(p.statuses).map((l) => l.icon));
+    for (const name of new Set([...SPEC_ICONS, ...DECISION_ICONS, ...statusIcons])) { raw[name] = clean(iconSvg(name)); }
     const palette = {};
     for (const p of Object.values(core.DEFAULT_PROFILES)) {
         for (const look of Object.values(p.statuses)) { palette[look.iconColor] = core.resolveColor(look.iconColor); }
@@ -265,6 +269,9 @@ function htmlData() {
         profiles: core.DEFAULT_PROFILES,
         colors: { ...THEME_PREVIEW, ...COLORS },
         presets: core.COLOR_PRESETS,
+        iconPresets: core.ICON_PRESETS,
+        defaultPreset: core.DEFAULT_COLOR_PRESET,
+        greyscalePresets: core.GREYSCALE_PRESETS,
         specIcons: SPEC_ICONS,
         decisionIcons: DECISION_ICONS,
     };
@@ -407,9 +414,11 @@ Name colour only.
     md += `
 ### Name colours: \`recordStatus.colorPreset\`
 
-The same folder with each preset. \`default\` is Record Status's own colours. \`theme\` and
-\`git\` borrow colours from the active colour theme, so they change with it (shown here as
-VS Code's Dark and Light Modern draw them). \`recordStatus.colors\` overrides single slots, and
+The same folder with each preset. \`git\` (the default) and \`theme\` borrow colours from the
+active colour theme, so they change with it (shown here as VS Code's Dark and Light Modern draw
+them). \`classic\` is Record Status's own colours, \`soft\` the same with lower contrast.
+\`monochrome\` turns the icons grey too: in bundled mode the whole icon theme; with Material
+Icon Theme, set \`material-icon-theme.saturation\` to 0. \`recordStatus.colors\` overrides single slots, and
 \`workbench.colorCustomizations\` sets exact hex values for the \`recordStatus.*\` ids.
 
 `;
@@ -481,20 +490,18 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
 ## 6. Questions to approve
 
 Decided 2026-10-10: specs use \`document\` (a page with lines of text), decisions use
-\`routing\` (a signpost: "which way?"). Other shapes can still be tried with the pickers on the
-[interactive page](showcase.html).
+\`routing\` (a signpost: "which way?"), and the default colour preset is \`git\`. Other shapes
+and presets can still be tried with the pickers on the [interactive page](showcase.html).
 
-1. **Default colour preset:** \`default\`, or one of \`theme\`, \`git\`, \`quiet\`,
-   \`monochrome\`, \`dark\`, \`none\`?
-2. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+1. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
    lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
-3. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
-4. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
+2. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
+3. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
    or should \`dropped\` get its own shape?
-5. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
-   Make the name amber too, or keep blue for "waiting on someone"?
-6. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
-7. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
+4. **Name colours:** with \`git\`, open decisions and specs in review are *purple* names with
+   *amber* icons, and \`planned\` has no name colour. Keep?
+5. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
+6. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
 `;
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.md"), md);
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.html"), showcaseHtml(htmlData()));

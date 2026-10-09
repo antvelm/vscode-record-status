@@ -2,7 +2,7 @@
     "name": "record-status",
     "displayName": "Record Status",
     "description": "Shows the status written inside a Markdown file (tasks, decisions, specs, ADRs) as the file's icon, name colour and folder progress in the Explorer. File names never change.",
-    "version": "0.3.0",
+    "version": "0.3.2",
     "publisher": "antvelm",
     "license": "MIT",
     "icon": "icon.png",
@@ -72,6 +72,8 @@
                     "type": "string",
                     "enum": ["auto", "bundled", "material", "badge", "off"],
                     "enumDescriptions": [
+                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped). The default.",
+                        "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
                         "Bundled when Record Status Icons is the active file icon theme, Material when Material Icon Theme is, otherwise badges.",
                         "Use this extension's icon theme, Record Status Icons. Writes nothing into the workspace. Falls back to badges while another icon theme is active.",
                         "Material Icon Theme clones, written into the workspace settings (material-icon-theme.files.customClones).",
@@ -83,17 +85,18 @@
                 },
                 "recordStatus.colorPreset": {
                     "type": "string",
-                    "enum": ["default", "theme", "git", "quiet", "monochrome", "dark", "none"],
+                    "enum": ["git", "classic", "soft", "theme", "quiet", "monochrome", "dark", "none"],
                     "enumDescriptions": [
+                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped). The default.",
                         "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
+                        "The classic colours with lower contrast: blended a third of the way toward the background (recordStatus.soft.* ids).",
                         "Follow the active colour theme: its chart and terminal colours.",
-                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped).",
                         "Colour only what needs attention: active, check, blocked, open or in review, dropped.",
-                        "Shades of grey: what needs attention is brightest, done is mid, dropped is dimmest (recordStatus.mono.* ids).",
-                        "Deeper, muted versions of the default colours (recordStatus.dark.* ids).",
+                        "Shades of grey, icons included: what needs attention is brightest, done is mid, dropped is dimmest (recordStatus.mono.* ids). In bundled mode every icon turns grey; for Material Icon Theme, set material-icon-theme.saturation to 0.",
+                        "Deeper, muted versions of the classic colours (recordStatus.dark.* ids).",
                         "No name colours; icons and badges only."
                     ],
-                    "default": "default",
+                    "default": "git",
                     "description": "Which colours file and folder names take for each status."
                 },
                 "recordStatus.colors": {
@@ -161,7 +164,15 @@
             { "id": "recordStatus.dark.blocked", "description": "Dark preset: blocked", "defaults": { "dark": "#c9514f", "light": "#8f1d1d", "highContrast": "#c9514f" } },
             { "id": "recordStatus.dark.living", "description": "Dark preset: spec being built", "defaults": { "dark": "#4a83c9", "light": "#1c3f8f", "highContrast": "#4a83c9" } },
             { "id": "recordStatus.dark.dropped", "description": "Dark preset: dropped / superseded", "defaults": { "dark": "#4b5058", "light": "#8c959f", "highContrast": "#4b5058" } },
-            { "id": "recordStatus.dark.proposed", "description": "Dark preset: proposed / open / review", "defaults": { "dark": "#6f7fc4", "light": "#3a4a9f", "highContrast": "#6f7fc4" } }
+            { "id": "recordStatus.dark.proposed", "description": "Dark preset: proposed / open / review", "defaults": { "dark": "#6f7fc4", "light": "#3a4a9f", "highContrast": "#6f7fc4" } },
+            { "id": "recordStatus.soft.planned", "description": "Soft preset: planned / draft", "defaults": { "dark": "#65686e", "light": "#9fa3ac", "highContrast": "#8a8f98" } },
+            { "id": "recordStatus.soft.inProgress", "description": "Soft preset: in progress / active", "defaults": { "dark": "#9c780b", "light": "#ce8f5f", "highContrast": "#e0a800" } },
+            { "id": "recordStatus.soft.check", "description": "Soft preset: built, waiting for a look", "defaults": { "dark": "#218291", "light": "#62a5b7", "highContrast": "#22b8cf" } },
+            { "id": "recordStatus.soft.completed", "description": "Soft preset: completed / accepted", "defaults": { "dark": "#327f54", "light": "#67ac81", "highContrast": "#3cb371" } },
+            { "id": "recordStatus.soft.blocked", "description": "Soft preset: blocked", "defaults": { "dark": "#a74947", "light": "#d26b6b", "highContrast": "#f0605d" } },
+            { "id": "recordStatus.soft.living", "description": "Soft preset: spec being built", "defaults": { "dark": "#5181b1", "light": "#6c8ce6", "highContrast": "#6cb6ff" } },
+            { "id": "recordStatus.soft.dropped", "description": "Soft preset: dropped / superseded", "defaults": { "dark": "#45494d", "light": "#bfc3cb", "highContrast": "#5a5f66" } },
+            { "id": "recordStatus.soft.proposed", "description": "Soft preset: proposed / open / review", "defaults": { "dark": "#4573b1", "light": "#6c8ce6", "highContrast": "#5aa0ff" } }
         ]
     }
 }

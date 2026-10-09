@@ -36,7 +36,9 @@ function settings() {
         legacy: { include: explicit(config, "include"), statuses: explicit(config, "statuses") },
         statusPattern: config.get("statusPattern"),
     });
-    const byName = Object.fromEntries(profiles.map((p) => [p.name, p]));
+    const colorPreset = config.get("colorPreset") || core.DEFAULT_COLOR_PRESET;
+    // Some presets (monochrome) also recolour the icons.
+    const byName = core.presetLooks(Object.fromEntries(profiles.map((p) => [p.name, p])), colorPreset);
     let iconMode = config.get("iconMode") || "auto";
     if (config.get("icons") === false) { iconMode = "off"; }
     const rollup = config.get("rollup") || {};
@@ -44,7 +46,7 @@ function settings() {
         profiles,
         byName,
         iconMode,
-        colorPreset: config.get("colorPreset") || "default",
+        colorPreset,
         colorOverrides: config.get("colors") || {},
         rollup: {
             enabled: rollup.enabled !== false,
@@ -255,9 +257,34 @@ class RecordStatus {
             }
             const svg = fs.readFileSync(source, "utf8");
             writeIfChanged(path.join(generated, `${id}.svg`), hex ? core.recolorSvg(svg, hex) : svg);
+            const light = core.resolveColor(g.look.iconColorLight);
+            if (light) { writeIfChanged(path.join(generated, `${id}_light.svg`), core.recolorSvg(svg, light)); }
         }
-        const manifest = core.buildThemeManifest(this._base, groups, (id) => `./generated/${id}.svg`);
+        const base = core.GREYSCALE_PRESETS.includes(this._settings.colorPreset) ? this.greyBase() : this._base;
+        const manifest = core.buildThemeManifest(base, groups, (id) => `./generated/${id}.svg`);
         writeIfChanged(path.join(this._themeDir, "record-status-icons.json"), JSON.stringify(manifest));
+    }
+
+    /**
+     * The base manifest pointing at greyscale copies of every icon in theme/grey/, so a
+     * monochrome Explorer has no colour left (folders and other files included). The copies are
+     * written once.
+     */
+    greyBase() {
+        if (this._greyBase) { return this._greyBase; }
+        const grey = path.join(this._themeDir, "grey");
+        fs.mkdirSync(grey, { recursive: true });
+        const base = JSON.parse(JSON.stringify(this._base));
+        for (const def of Object.values(base.iconDefinitions)) {
+            const file = path.basename(def.iconPath);
+            const target = path.join(grey, file);
+            if (!fs.existsSync(target)) {
+                fs.writeFileSync(target, core.greySvg(fs.readFileSync(path.join(this._themeDir, def.iconPath), "utf8")));
+            }
+            def.iconPath = `./grey/${file}`;
+        }
+        this._greyBase = base;
+        return base;
     }
 
     /** Once per user: offer an icon source when records exist but only badges can be shown. */

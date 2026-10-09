@@ -83,12 +83,14 @@
                 },
                 "recordStatus.colorPreset": {
                     "type": "string",
-                    "enum": ["default", "theme", "git", "quiet", "none"],
+                    "enum": ["default", "theme", "git", "quiet", "monochrome", "dark", "none"],
                     "enumDescriptions": [
                         "Record Status's own colours (recordStatus.* colour ids; retune them in workbench.colorCustomizations).",
                         "Follow the active colour theme: its chart and terminal colours.",
                         "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped).",
                         "Colour only what needs attention: active, check, blocked, open or in review, dropped.",
+                        "Shades of grey: what needs attention is brightest, done is mid, dropped is dimmest (recordStatus.mono.* ids).",
+                        "Deeper, muted versions of the default colours (recordStatus.dark.* ids).",
                         "No name colours; icons and badges only."
                     ],
                     "default": "default",
@@ -143,7 +145,23 @@
             { "id": "recordStatus.blocked",    "description": "Blocked",                  "defaults": { "dark": "#f0605d", "light": "#b91c1c", "highContrast": "#f0605d" } },
             { "id": "recordStatus.living",     "description": "Spec being built",         "defaults": { "dark": "#6cb6ff", "light": "#1d4ed8", "highContrast": "#6cb6ff" } },
             { "id": "recordStatus.dropped",    "description": "Dropped / superseded",     "defaults": { "dark": "#5a5f66", "light": "#9ca3af", "highContrast": "#5a5f66" } },
-            { "id": "recordStatus.proposed",   "description": "Proposed / open / review", "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } }
+            { "id": "recordStatus.proposed",   "description": "Proposed / open / review", "defaults": { "dark": "#5aa0ff", "light": "#1d4ed8", "highContrast": "#5aa0ff" } },
+            { "id": "recordStatus.mono.planned", "description": "Monochrome preset: planned / draft", "defaults": { "dark": "#8c8c8c", "light": "#767676", "highContrast": "#8c8c8c" } },
+            { "id": "recordStatus.mono.inProgress", "description": "Monochrome preset: in progress / active", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.mono.check", "description": "Monochrome preset: built, waiting for a look", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.mono.completed", "description": "Monochrome preset: completed / accepted", "defaults": { "dark": "#b4b4b4", "light": "#555555", "highContrast": "#b4b4b4" } },
+            { "id": "recordStatus.mono.blocked", "description": "Monochrome preset: blocked", "defaults": { "dark": "#ffffff", "light": "#000000", "highContrast": "#ffffff" } },
+            { "id": "recordStatus.mono.living", "description": "Monochrome preset: spec being built", "defaults": { "dark": "#b4b4b4", "light": "#555555", "highContrast": "#b4b4b4" } },
+            { "id": "recordStatus.mono.dropped", "description": "Monochrome preset: dropped / superseded", "defaults": { "dark": "#5f5f5f", "light": "#ababab", "highContrast": "#5f5f5f" } },
+            { "id": "recordStatus.mono.proposed", "description": "Monochrome preset: proposed / open / review", "defaults": { "dark": "#f0f0f0", "light": "#1a1a1a", "highContrast": "#f0f0f0" } },
+            { "id": "recordStatus.dark.planned", "description": "Dark preset: planned / draft", "defaults": { "dark": "#6e7681", "light": "#57606a", "highContrast": "#6e7681" } },
+            { "id": "recordStatus.dark.inProgress", "description": "Dark preset: in progress / active", "defaults": { "dark": "#c69026", "light": "#8a5a00", "highContrast": "#c69026" } },
+            { "id": "recordStatus.dark.check", "description": "Dark preset: built, waiting for a look", "defaults": { "dark": "#1b9aaa", "light": "#0b5c6e", "highContrast": "#1b9aaa" } },
+            { "id": "recordStatus.dark.completed", "description": "Dark preset: completed / accepted", "defaults": { "dark": "#3f9b5c", "light": "#1a6b33", "highContrast": "#3f9b5c" } },
+            { "id": "recordStatus.dark.blocked", "description": "Dark preset: blocked", "defaults": { "dark": "#c9514f", "light": "#8f1d1d", "highContrast": "#c9514f" } },
+            { "id": "recordStatus.dark.living", "description": "Dark preset: spec being built", "defaults": { "dark": "#4a83c9", "light": "#1c3f8f", "highContrast": "#4a83c9" } },
+            { "id": "recordStatus.dark.dropped", "description": "Dark preset: dropped / superseded", "defaults": { "dark": "#4b5058", "light": "#8c959f", "highContrast": "#4b5058" } },
+            { "id": "recordStatus.dark.proposed", "description": "Dark preset: proposed / open / review", "defaults": { "dark": "#6f7fc4", "light": "#3a4a9f", "highContrast": "#6f7fc4" } }
         ]
     }
 }

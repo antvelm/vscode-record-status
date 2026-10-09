@@ -27,10 +27,10 @@ const DEFAULT_PROFILES = {
     decision: {
         include: ["**/decisions/*.md"],
         statuses: {
-            open:       { icon: "key", iconColor: "amber-500", nameColor: "recordStatus.proposed",  glyph: "?" },
-            decided:    { icon: "key", iconColor: "green-500", nameColor: "recordStatus.completed", glyph: "✓" },
-            superseded: { icon: "key", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
-            dropped:    { icon: "key", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
+            open:       { icon: "routing", iconColor: "amber-500", nameColor: "recordStatus.proposed",  glyph: "?" },
+            decided:    { icon: "routing", iconColor: "green-500", nameColor: "recordStatus.completed", glyph: "✓" },
+            superseded: { icon: "routing", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
+            dropped:    { icon: "routing", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
         },
     },
     spec: {
@@ -79,6 +79,10 @@ const COLOR_PRESETS = {
         planned: "", inProgress: "recordStatus.inProgress", check: "recordStatus.check", completed: "",
         blocked: "recordStatus.blocked", living: "", dropped: "recordStatus.dropped", proposed: "recordStatus.proposed",
     },
+    // Shades of grey: attention brightest, done mid, dropped dimmest.
+    monochrome: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.mono.${s}`])),
+    // Deeper, muted versions of the default colours.
+    dark: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.dark.${s}`])),
     none: Object.fromEntries(COLOR_SLOTS.map((s) => [s, ""])),
 };
 

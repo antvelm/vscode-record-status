@@ -46,7 +46,7 @@ function nameHex(nameColor, skin, preset = "default") {
 }
 // Icons the showcase page offers as alternatives for specs and decisions.
 const SPEC_ICONS = ["document", "log", "contributing", "toc", "architecture"];
-const DECISION_ICONS = ["key", "routing", "git", "chess", "tune", "label", "certificate", "pipeline"];
+const DECISION_ICONS = ["routing", "key", "git", "chess", "tune", "label", "certificate", "pipeline"];
 
 const SKINS = {
     dark: { bg: "#181818", fg: "#cccccc", dim: "#8b8b8b", guide: "#404040", tipBg: "#252526", tipBorder: "#454545" },
@@ -480,21 +480,21 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
     md += `
 ## 6. Questions to approve
 
-1. **Decision icon:** a key now. Alternatives on the [interactive page](showcase.html)
-   (Decision icon picker): \`routing\` (a signpost: "which way?"), \`git\` (a fork),
-   \`chess\`, \`tune\`, \`label\`, \`certificate\`, \`pipeline\`.
-2. **Spec icon:** now \`document\` (a page with lines of text). Alternatives on the page:
-   \`log\`, \`contributing\`, \`toc\`, \`architecture\` (the old one).
-3. **Default colour preset:** \`default\`, or one of \`theme\`, \`git\`, \`quiet\`, \`none\`?
-4. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+Decided 2026-10-10: specs use \`document\` (a page with lines of text), decisions use
+\`routing\` (a signpost: "which way?"). Other shapes can still be tried with the pickers on the
+[interactive page](showcase.html).
+
+1. **Default colour preset:** \`default\`, or one of \`theme\`, \`git\`, \`quiet\`,
+   \`monochrome\`, \`dark\`, \`none\`?
+2. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
    lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
-5. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
-6. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
+3. **\`check\` in cyan with a magnifier:** distinct enough from \`active\` (amber gear)?
+4. **\`dropped\` reuses the grey todo icon** and \`split\` the diff icon, both dark grey. Fine,
    or should \`dropped\` get its own shape?
-7. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
+5. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
    Make the name amber too, or keep blue for "waiting on someone"?
-8. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
-9. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
+6. **Glyphs in badge mode:** \`·\` for planned and draft is very small. Use \`○\` instead?
+7. **Roll-up at 100%:** \`✓\` and a green folder name. Keep the green name?
 `;
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.md"), md);
     fs.writeFileSync(path.join(ROOT, "docs", "showcase.html"), showcaseHtml(htmlData()));

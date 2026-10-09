@@ -88,7 +88,7 @@ then run **Developer: Reload Window**. Run it again after pulling an update.
 | `recordStatus.profiles` | built-in `task`, `decision`, `spec`, `reference` | Kinds of record, in order; the first whose `include` globs match a file owns it. Each has `include`, an optional `statusPattern`, and `statuses` (word → look). A profile named like a built-in one inherits the built-in `include` and `statuses` it doesn't set. |
 | `recordStatus.statusPattern` | `\*\*Status:\*\*\s*([A-Za-z-]+)` | Regex that finds the status; the first group is it. Lower-cased; `"superseded by 004"` reads as `superseded`. |
 | `recordStatus.iconMode` | `auto` | `auto`, `bundled`, `material`, `badge` or `off` (see above). |
-| `recordStatus.colorPreset` | `default` | Name colours: `default` (Record Status's own), `theme` (the colour theme's chart colours), `git` (git's Explorer colours), `quiet` (only what needs attention), `none`. |
+| `recordStatus.colorPreset` | `default` | Name colours: `default` (Record Status's own), `theme` (the colour theme's chart colours), `git` (git's Explorer colours), `quiet` (only what needs attention), `monochrome` (shades of grey), `dark` (deeper, muted colours), `none`. |
 | `recordStatus.colors` | `{}` | Per-slot overrides on top of the preset: slot (`planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`) → theme colour id, or `""` for none. |
 | `recordStatus.rollup` | on, tasks | `enabled`, `profiles` (whose records count; `["task"]`), `folders` (globs of folders that get a badge; empty: the folder above each record's folder), `nameColor` (folder name at 100%). |
 

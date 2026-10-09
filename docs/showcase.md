@@ -44,10 +44,10 @@ as `material`).
 
 | Icon | Word | Meaning | Icon (Material name, colour) | Name colour dark / light | Glyph (badge mode) | Roll-up |
 |---|---|---|---|---|---|---|
-| <img src="showcase/icon-decision-open.svg" width="20"> | `open` | Asked or to be asked. | `key`, `amber-500` | <img src="showcase/swatch-5aa0ff.svg" width="12" height="12"> `#5aa0ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `?` | — |
-| <img src="showcase/icon-decision-decided.svg" width="20"> | `decided` | Answered; the spec is updated. | `key`, `green-500` | <img src="showcase/swatch-3cb371.svg" width="12" height="12"> `#3cb371` / <img src="showcase/swatch-15803d.svg" width="12" height="12"> `#15803d` | `✓` | — |
-| <img src="showcase/icon-decision-superseded.svg" width="20"> | `superseded` | Replaced by a later decision. | `key`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
-| <img src="showcase/icon-decision-dropped.svg" width="20"> | `dropped` | No longer relevant. | `key`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
+| <img src="showcase/icon-decision-open.svg" width="20"> | `open` | Asked or to be asked. | `routing`, `amber-500` | <img src="showcase/swatch-5aa0ff.svg" width="12" height="12"> `#5aa0ff` / <img src="showcase/swatch-1d4ed8.svg" width="12" height="12"> `#1d4ed8` | `?` | — |
+| <img src="showcase/icon-decision-decided.svg" width="20"> | `decided` | Answered; the spec is updated. | `routing`, `green-500` | <img src="showcase/swatch-3cb371.svg" width="12" height="12"> `#3cb371` / <img src="showcase/swatch-15803d.svg" width="12" height="12"> `#15803d` | `✓` | — |
+| <img src="showcase/icon-decision-superseded.svg" width="20"> | `superseded` | Replaced by a later decision. | `routing`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
+| <img src="showcase/icon-decision-dropped.svg" width="20"> | `dropped` | No longer relevant. | `routing`, `gray-700` | <img src="showcase/swatch-5a5f66.svg" width="12" height="12"> `#5a5f66` / <img src="showcase/swatch-9ca3af.svg" width="12" height="12"> `#9ca3af` | `–` | — |
 
 ### Spec — `**/spec/*.md`
 
@@ -141,6 +141,18 @@ VS Code's Dark and Light Modern draw them). `recordStatus.colors` overrides sing
 |---|---|
 | <img src="showcase/preset-quiet-dark.svg" alt="quiet colour preset, dark theme" width="340"> | <img src="showcase/preset-quiet-light.svg" alt="quiet colour preset, light theme" width="340"> |
 
+#### `monochrome`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-monochrome-dark.svg" alt="monochrome colour preset, dark theme" width="340"> | <img src="showcase/preset-monochrome-light.svg" alt="monochrome colour preset, light theme" width="340"> |
+
+#### `dark`
+
+| Dark | Light |
+|---|---|
+| <img src="showcase/preset-dark-dark.svg" alt="dark colour preset, dark theme" width="340"> | <img src="showcase/preset-dark-light.svg" alt="dark colour preset, light theme" width="340"> |
+
 #### `none`
 
 | Dark | Light |
@@ -180,18 +192,18 @@ Hovering a record names its kind and status; hovering a roll-up folder gives the
 
 ## 6. Questions to approve
 
-1. **Decision icon:** a key now. Alternatives on the [interactive page](showcase.html)
-   (Decision icon picker): `routing` (a signpost: "which way?"), `git` (a fork),
-   `chess`, `tune`, `label`, `certificate`, `pipeline`.
-2. **Spec icon:** now `document` (a page with lines of text). Alternatives on the page:
-   `log`, `contributing`, `toc`, `architecture` (the old one).
-3. **Default colour preset:** `default`, or one of `theme`, `git`, `quiet`, `none`?
-4. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
+Decided 2026-10-10: specs use `document` (a page with lines of text), decisions use
+`routing` (a signpost: "which way?"). Other shapes can still be tried with the pickers on the
+[interactive page](showcase.html).
+
+1. **Default colour preset:** `default`, or one of `theme`, `git`, `quiet`,
+   `monochrome`, `dark`, `none`?
+2. **Shapes per kind:** tasks use a different shape per state (todo, gear, magnifier, verified,
    lock); decisions and specs keep one shape. Keep, or give tasks one shape too?
-5. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
-6. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
+3. **`check` in cyan with a magnifier:** distinct enough from `active` (amber gear)?
+4. **`dropped` reuses the grey todo icon** and `split` the diff icon, both dark grey. Fine,
    or should `dropped` get its own shape?
-7. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
+5. **Name colours:** open decisions and specs in review are *blue* names with *amber* icons.
    Make the name amber too, or keep blue for "waiting on someone"?
-8. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
-9. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?
+6. **Glyphs in badge mode:** `·` for planned and draft is very small. Use `○` instead?
+7. **Roll-up at 100%:** `✓` and a green folder name. Keep the green name?

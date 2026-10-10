@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.3.3
 
+- Published on the Visual Studio Marketplace and Open VSX under the publisher
+  `manapotionstudios`: the extension ID is now `manapotionstudios.record-status`. If you installed
+  an earlier `.vsix` (`antvelm.record-status`), uninstall it; settings carry over.
+- Licence holder is Mana Potion Studios UG (haftungsbeschränkt).
 - `skills/record-status/`: an agent skill for writing records in this layout (not in the `.vsix`).
 
 ## 0.3.2

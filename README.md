@@ -74,6 +74,15 @@ theme to **Record Status Icons**, or to use badges only.
 
 ## Install
 
+**From the Marketplace:** search for **Record Status** in VS Code's Extensions view, or run
+`code --install-extension manapotionstudios.record-status`. It is on the
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=manapotionstudios.record-status)
+and, for VSCodium, Cursor, Windsurf and other editors built on VS Code, on
+[Open VSX](https://open-vsx.org/extension/manapotionstudios/record-status).
+
+If you installed an earlier `.vsix` (published as `antvelm.record-status`), uninstall it first:
+`code --uninstall-extension antvelm.record-status`. Settings carry over.
+
 **From a `.vsix`:** in VS Code, open the Extensions view, then **…** → **Install from VSIX…** and
 pick `record-status-<version>.vsix`, or run `code --install-extension record-status-<version>.vsix`.
 It then shows in the Extensions view like any other extension and can be disabled or uninstalled
@@ -157,5 +166,5 @@ Edge for the PNGs). After changing a look, regenerate and commit the showcase wi
 
 ## Licence
 
-MIT. The bundled icons are from Material Icon Theme, MIT, © Material Extensions; their licence
+MIT, © Mana Potion Studios UG (haftungsbeschränkt). The bundled icons are from Material Icon Theme, MIT, © Material Extensions; their licence
 ships in `theme/MATERIAL-LICENSE.txt`.

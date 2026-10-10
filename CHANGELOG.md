@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `skills/record-status/`: an agent skill for writing records in this layout (not in the `.vsix`).
+
 ## 0.3.2
 
 - Name-colour presets (`recordStatus.colorPreset`): `git`, the default, plus `classic` (the 0.3.0

@@ -38,7 +38,14 @@ they are picked up with no settings at all:
 | Reference | `**/assessments/*.md` | `research` · `assessment` · `explainer` |
 
 The folder above a `tasks/` folder shows the percentage of its tasks that are done (`✓` at 100%;
-`dropped` and `split` tasks don't count).
+`dropped` and `split` tasks don't count). So a folder per feature gets its own progress badge:
+
+```
+docs/fire-oil/            ← 40
+    spec/fire-oil.md
+    decisions/001-….md
+    tasks/001-….md
+```
 
 On first use, if no status icons can be shown yet, Record Status offers to switch the file icon
 theme to **Record Status Icons**, or to use badges only.
@@ -80,6 +87,16 @@ python install.py --package  # only build the .vsix
 ```
 
 then run **Developer: Reload Window**. Run it again after pulling an update.
+
+## Agent skill
+
+[`skills/record-status/SKILL.md`](skills/record-status/SKILL.md) teaches a coding agent (Claude
+Code, or any agent that reads Agent Skills) to write records in this layout: the folders, file
+names, the status line, what each status word means, and which ones only a person should set (an
+agent finishes a task as `check`, never `done`). To use it, copy the `skills/record-status` folder
+into `~/.claude/skills/` for every project, or into a project's `.claude/skills/` to share it with
+everyone on that project. A project's own rules (`AGENTS.md`, its own records skill) take
+precedence over it. It is not part of the `.vsix`.
 
 ## Settings
 

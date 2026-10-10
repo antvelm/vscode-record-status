@@ -23,11 +23,11 @@ mode, click files to change their status. Every case, with dark and light pictur
    [Open VSX](https://open-vsx.org/extension/manapotionstudios/md-status).
 2. Write a `**Status:**` line in Markdown files under `tasks/`, `decisions/`, `spec/` or
    `assessments/` folders (see [Quick start](#quick-start)).
-3. When it first finds such a file, MD Status asks whether to switch the file icon theme to
-   **MD Status Icons**. Choose **Use MD Status Icons** for status icons, or
-   **Badges only** to keep your icon theme.
+3. When it first finds such a file, MD Status switches the file icon theme to **MD Status Icons**
+   (Material Icon Theme's icons plus the status icons), with an **Undo** button. If you had picked
+   another icon theme yourself, it asks first instead.
 
-No settings to edit: the default folders work out of the box, and **MD Status: Configure…**
+No settings to edit: install it and the default folders work out of the box, and **MD Status: Configure…**
 (Command Palette) adds other folders for you.
 
 **Upgrading from Record Status** (this extension's earlier name, `antvelm.record-status` or
@@ -78,8 +78,8 @@ docs/fire-oil/            ← 40
     tasks/001-….md
 ```
 
-On first use, if no status icons can be shown yet, MD Status offers to switch the file icon
-theme to **MD Status Icons**, or to use badges only.
+On first use, MD Status switches the file icon theme to **MD Status Icons** (with an Undo), or asks
+first if you had chosen another icon theme yourself.
 
 ## How it works
 

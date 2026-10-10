@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- One-click setup: on first use, a user on VS Code's default file icons (or on the old Record Status
+  Icons theme) is switched to MD Status Icons straight away, with an Undo. Users who picked another
+  icon theme are still asked first.
+
 ## 0.4.0
 
 - **Renamed to MD Status** (was Record Status): extension ID `manapotionstudios.md-status`, settings

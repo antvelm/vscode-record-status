@@ -21,6 +21,7 @@ const core = require("./core");
 const MATERIAL = "PKief.material-icon-theme";
 const MATERIAL_THEME = "material-icon-theme";
 const BUNDLED_THEME = "md-status-icons";
+const LEGACY_THEMES = ["record-status-icons"]; // the theme id before the rename to MD Status
 const PROMPTED_KEY = "mdStatus.iconPromptShown";
 
 function explicit(config, key) {
@@ -287,12 +288,34 @@ class MdStatus {
         return base;
     }
 
-    /** Once per user: offer an icon source when records exist but only badges can be shown. */
+    /**
+     * Once per user, when records exist but only badges can be shown. A user still on VS Code's
+     * default file icons (or on this extension's pre-rename theme) is switched to MD Status Icons
+     * straight away, with an Undo; a user who picked another icon theme is asked first.
+     */
     maybePrompt() {
         if (!this._records.size || this._mode !== "badge" || this._settings.iconMode === "badge") { return; }
         const state = this._context.globalState;
         if (state.get(PROMPTED_KEY)) { return; }
         state.update(PROMPTED_KEY, true);
+        const workbench = vscode.workspace.getConfiguration("workbench");
+        const theme = workbench.inspect("iconTheme") || {};
+        const chosenHere = theme.workspaceFolderValue ?? theme.workspaceValue;
+        const chosen = chosenHere ?? theme.globalValue;
+        const onDefault = chosen === undefined || chosen === theme.defaultValue || LEGACY_THEMES.includes(chosen);
+        if (onDefault && chosenHere === undefined) {
+            const previous = LEGACY_THEMES.includes(theme.globalValue) ? undefined : theme.globalValue;
+            workbench.update("iconTheme", BUNDLED_THEME, vscode.ConfigurationTarget.Global).then(() =>
+                vscode.window.showInformationMessage(
+                    "MD Status: your file icon theme is now MD Status Icons, so each record shows its status as its Explorer icon.",
+                    "Undo",
+                ).then((choice) => {
+                    if (choice !== "Undo") { return; }
+                    workbench.update("iconTheme", previous, vscode.ConfigurationTarget.Global);
+                    vscode.workspace.getConfiguration("mdStatus").update("iconMode", "badge", vscode.ConfigurationTarget.Global);
+                }));
+            return;
+        }
         const use = "Use MD Status Icons";
         const badges = "Badges only";
         vscode.window.showInformationMessage(
@@ -300,7 +323,7 @@ class MdStatus {
             use, badges,
         ).then((choice) => {
             if (choice === use) {
-                vscode.workspace.getConfiguration("workbench").update("iconTheme", BUNDLED_THEME, vscode.ConfigurationTarget.Global);
+                workbench.update("iconTheme", BUNDLED_THEME, vscode.ConfigurationTarget.Global);
             } else if (choice === badges) {
                 vscode.workspace.getConfiguration("mdStatus").update("iconMode", "badge", vscode.ConfigurationTarget.Global);
             }

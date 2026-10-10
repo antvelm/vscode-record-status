@@ -2,7 +2,7 @@
     "name": "md-status",
     "displayName": "MD Status",
     "description": "Shows the status written inside a Markdown file (tasks, decisions, specs, ADRs) as the file's icon, name colour and folder progress in the Explorer. File names never change.",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "publisher": "manapotionstudios",
     "author": { "name": "Mana Potion Studios UG (haftungsbeschränkt)", "url": "https://github.com/antvelm" },
     "license": "MIT",

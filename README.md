@@ -5,16 +5,45 @@ decision, a spec, an ADR — on that file in the Explorer, as its icon and the c
 and shows on a folder how many of its tasks are done. Change the status line, save, and the
 Explorer follows. File names never change, so links keep working.
 
-<a href="https://antvelm.github.io/vscode-record-status/showcase.html">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/hero-dark.png">
-    <img src="docs/hero-light.png" width="340" alt="Record Status in the VS Code Explorer: each task, decision and spec file shows its status as its icon and name colour, and the folder shows 40% of its tasks done">
-  </picture>
+<a href="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/promo/record-status.mp4">
+  <img src="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/promo/record-status.gif" width="720" alt="Record Status in VS Code: changing the status line of a task file and saving updates its icon and name colour in the Explorer, and the folder shows the percentage of tasks done">
 </a>
 
 **[Try the interactive showcase](https://antvelm.github.io/vscode-record-status/showcase.html)**: switch theme and icon
 mode, click files to change their status. Every case, with dark and light pictures, is also in
 [`docs/showcase.md`](docs/showcase.md).
+
+## Install
+
+1. In VS Code, open the Extensions view (`Ctrl+Shift+X`), search for **Record Status** and click
+   **Install**. Or install it from the
+   [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=manapotionstudios.record-status),
+   or run `code --install-extension manapotionstudios.record-status`. VSCodium, Cursor, Windsurf and
+   other editors built on VS Code get it the same way from
+   [Open VSX](https://open-vsx.org/extension/manapotionstudios/record-status).
+2. Write a `**Status:**` line in Markdown files under `tasks/`, `decisions/`, `spec/` or
+   `assessments/` folders (see [Quick start](#quick-start)).
+3. When it first finds such a file, Record Status asks whether to switch the file icon theme to
+   **Record Status Icons**. Choose **Use Record Status Icons** for status icons, or
+   **Badges only** to keep your icon theme.
+
+No settings to edit: the default folders work out of the box, and **Record Status: Configure…**
+(Command Palette) adds other folders for you.
+
+**Upgrading from an earlier `.vsix`** (published as `antvelm.record-status`): uninstall that one
+first, with `code --uninstall-extension antvelm.record-status`. Settings carry over.
+
+**From source** (needs Node.js and VS Code's `code` command on PATH):
+
+```
+git clone https://github.com/antvelm/vscode-record-status
+cd vscode-record-status
+python install.py            # build the .vsix and install it
+python install.py --package  # only build the .vsix
+```
+
+then run **Developer: Reload Window**. A built `.vsix` can also be installed with **…** →
+**Install from VSIX…** in the Extensions view.
 
 ## Quick start
 
@@ -71,31 +100,6 @@ theme to **Record Status Icons**, or to use badges only.
 - **Icons match by file name, not path** (in both icon themes). When files with the same name are
   in different states (several `README.md`, say), that name gets no status icon; its name colour
   still shows the status. **Record Status: Show Log** lists such names.
-
-## Install
-
-**From the Marketplace:** search for **Record Status** in VS Code's Extensions view, or run
-`code --install-extension manapotionstudios.record-status`. It is on the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=manapotionstudios.record-status)
-and, for VSCodium, Cursor, Windsurf and other editors built on VS Code, on
-[Open VSX](https://open-vsx.org/extension/manapotionstudios/record-status).
-
-If you installed an earlier `.vsix` (published as `antvelm.record-status`), uninstall it first:
-`code --uninstall-extension antvelm.record-status`. Settings carry over.
-
-**From a `.vsix`:** in VS Code, open the Extensions view, then **…** → **Install from VSIX…** and
-pick `record-status-<version>.vsix`, or run `code --install-extension record-status-<version>.vsix`.
-It then shows in the Extensions view like any other extension and can be disabled or uninstalled
-there.
-
-**From a clone of this repo** (needs Node.js and VS Code's `code` command on PATH):
-
-```
-python install.py            # build the .vsix and install it
-python install.py --package  # only build the .vsix
-```
-
-then run **Developer: Reload Window**. Run it again after pulling an update.
 
 ## Agent skill
 

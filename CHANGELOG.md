@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.4
+
+- README: the promo animation at the top; install steps for the Marketplace and Open VSX first,
+  building from source last.
+
 ## 0.3.3
 
 - Published on the Visual Studio Marketplace and Open VSX under the publisher

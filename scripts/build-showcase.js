@@ -123,7 +123,7 @@ function explorer(rows, mode, skin, { tooltip, preset = core.DEFAULT_COLOR_PRESE
             icon = plain(placeIcon(folderIcon(r.name, r.open), x + 14, mid - 8));
             if (r.rollup) {
                 badge = core.rollupBadge(r.rollup) || "";
-                if (r.rollup.done >= r.rollup.counted && r.rollup.counted) { label = nameHex("recordStatus.completed", skin, preset) || label; }
+                if (r.rollup.done >= r.rollup.counted && r.rollup.counted) { label = nameHex("mdStatus.completed", skin, preset) || label; }
             }
         } else {
             const look = r.profile ? core.lookOf({ profile: r.profile, status: r.status }, looks) : undefined;
@@ -316,7 +316,7 @@ function main() {
     fs.mkdirSync(OUT, { recursive: true });
     writeSwatches();
 
-    let md = `# Record Status: design showcase
+    let md = `# MD Status: design showcase
 
 Every case the extension draws in the Explorer, generated from the extension's own data
 (\`core.js\` built-in profiles, the bundled icon theme, \`package.json\` colours) by
@@ -379,9 +379,9 @@ as \`material\`).
     ];
     md += `## 2. Icon modes
 
-One folder in each \`recordStatus.iconMode\`. Roll-up and name colours are the same in every mode.
+One folder in each \`mdStatus.iconMode\`. Roll-up and name colours are the same in every mode.
 
-### \`bundled\` — Record Status Icons is the file icon theme
+### \`bundled\` — MD Status Icons is the file icon theme
 
 Status icons, name colours. Writes nothing into the workspace.
 
@@ -412,14 +412,14 @@ Name colour only.
     md += pair("mode-off", "off mode");
 
     md += `
-### Name colours: \`recordStatus.colorPreset\`
+### Name colours: \`mdStatus.colorPreset\`
 
 The same folder with each preset. \`git\` (the default) and \`theme\` borrow colours from the
 active colour theme, so they change with it (shown here as VS Code's Dark and Light Modern draw
-them). \`classic\` is Record Status's own colours, \`soft\` the same with lower contrast.
+them). \`classic\` is MD Status's own colours, \`soft\` the same with lower contrast.
 \`monochrome\` turns the icons grey too: in bundled mode the whole icon theme; with Material
-Icon Theme, set \`material-icon-theme.saturation\` to 0. \`recordStatus.colors\` overrides single slots, and
-\`workbench.colorCustomizations\` sets exact hex values for the \`recordStatus.*\` ids.
+Icon Theme, set \`material-icon-theme.saturation\` to 0. \`mdStatus.colors\` overrides single slots, and
+\`workbench.colorCustomizations\` sets exact hex values for the \`mdStatus.*\` ids.
 
 `;
     for (const preset of Object.keys(core.COLOR_PRESETS)) {

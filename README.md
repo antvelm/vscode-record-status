@@ -1,43 +1,45 @@
-# Record Status
+# MD Status
 
 A VS Code extension that shows the status written *inside* a Markdown file — a task, a design
 decision, a spec, an ADR — on that file in the Explorer, as its icon and the colour of its name,
 and shows on a folder how many of its tasks are done. Change the status line, save, and the
 Explorer follows. File names never change, so links keep working.
 
-<a href="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/promo/record-status.mp4">
-  <img src="https://github.com/antvelm/vscode-record-status/raw/HEAD/docs/promo/record-status.gif" width="720" alt="Record Status in VS Code: changing the status line of a task file and saving updates its icon and name colour in the Explorer, and the folder shows the percentage of tasks done">
+<a href="https://github.com/antvelm/vscode-md-status/raw/HEAD/docs/promo/md-status.mp4">
+  <img src="https://github.com/antvelm/vscode-md-status/raw/HEAD/docs/promo/md-status.gif" width="720" alt="MD Status in VS Code: changing the status line of a task file and saving updates its icon and name colour in the Explorer, and the folder shows the percentage of tasks done">
 </a>
 
-**[Try the interactive showcase](https://antvelm.github.io/vscode-record-status/showcase.html)**: switch theme and icon
+**[Try the interactive showcase](https://antvelm.github.io/vscode-md-status/showcase.html)**: switch theme and icon
 mode, click files to change their status. Every case, with dark and light pictures, is also in
 [`docs/showcase.md`](docs/showcase.md).
 
 ## Install
 
-1. In VS Code, open the Extensions view (`Ctrl+Shift+X`), search for **Record Status** and click
+1. In VS Code, open the Extensions view (`Ctrl+Shift+X`), search for **MD Status** and click
    **Install**. Or install it from the
-   [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=manapotionstudios.record-status),
-   or run `code --install-extension manapotionstudios.record-status`. VSCodium, Cursor, Windsurf and
+   [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=manapotionstudios.md-status),
+   or run `code --install-extension manapotionstudios.md-status`. VSCodium, Cursor, Windsurf and
    other editors built on VS Code get it the same way from
-   [Open VSX](https://open-vsx.org/extension/manapotionstudios/record-status).
+   [Open VSX](https://open-vsx.org/extension/manapotionstudios/md-status).
 2. Write a `**Status:**` line in Markdown files under `tasks/`, `decisions/`, `spec/` or
    `assessments/` folders (see [Quick start](#quick-start)).
-3. When it first finds such a file, Record Status asks whether to switch the file icon theme to
-   **Record Status Icons**. Choose **Use Record Status Icons** for status icons, or
+3. When it first finds such a file, MD Status asks whether to switch the file icon theme to
+   **MD Status Icons**. Choose **Use MD Status Icons** for status icons, or
    **Badges only** to keep your icon theme.
 
-No settings to edit: the default folders work out of the box, and **Record Status: Configure…**
+No settings to edit: the default folders work out of the box, and **MD Status: Configure…**
 (Command Palette) adds other folders for you.
 
-**Upgrading from an earlier `.vsix`** (published as `antvelm.record-status`): uninstall that one
-first, with `code --uninstall-extension antvelm.record-status`. Settings carry over.
+**Upgrading from Record Status** (this extension's earlier name, `antvelm.record-status` or
+`manapotionstudios.record-status`): uninstall it, e.g.
+`code --uninstall-extension antvelm.record-status`. MD Status copies your `recordStatus.*` settings
+to `mdStatus.*` on first start.
 
 **From source** (needs Node.js and VS Code's `code` command on PATH):
 
 ```
-git clone https://github.com/antvelm/vscode-record-status
-cd vscode-record-status
+git clone https://github.com/antvelm/vscode-md-status
+cd vscode-md-status
 python install.py            # build the .vsix and install it
 python install.py --package  # only build the .vsix
 ```
@@ -76,37 +78,37 @@ docs/fire-oil/            ← 40
     tasks/001-….md
 ```
 
-On first use, if no status icons can be shown yet, Record Status offers to switch the file icon
-theme to **Record Status Icons**, or to use badges only.
+On first use, if no status icons can be shown yet, MD Status offers to switch the file icon
+theme to **MD Status Icons**, or to use badges only.
 
 ## How it works
 
 - **Name colour, tooltip and badges** use VS Code's file decoration API, the same one git uses to
   mark a file "M". They work with any icon theme.
 - **The icon.** VS Code gives an extension no way to set another file's icon, so there are
-  three ways to get one (`recordStatus.iconMode`):
-  - **`bundled`:** Record Status ships its own file icon theme, *Record Status Icons*: every icon
+  three ways to get one (`mdStatus.iconMode`):
+  - **`bundled`:** MD Status ships its own file icon theme, *MD Status Icons*: every icon
     of [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme)
     (MIT, copied in at build time) plus one recoloured icon per status. The extension rewrites the
     theme's manifest inside its own folder when a status changes, and VS Code reloads it. Nothing
     is written into your workspace.
-  - **`material`:** with Material Icon Theme active, Record Status keeps clones named `record-*`
+  - **`material`:** with Material Icon Theme active, MD Status keeps clones named `record-*`
     in `material-icon-theme.files.customClones` in the **workspace** settings. If
     `.vscode/settings.json` is under version control, every status change shows up there.
   - **`badge`:** no icon change; a coloured glyph after the name (`●` active, `◐` check, `✓` done,
     `✗` blocked, `?` open, `·` planned).
-  - `auto` (default) picks `bundled` when Record Status Icons is the active icon theme, `material`
+  - `auto` (default) picks `bundled` when MD Status Icons is the active icon theme, `material`
     when Material Icon Theme is, and `badge` otherwise.
 - **Icons match by file name, not path** (in both icon themes). When files with the same name are
   in different states (several `README.md`, say), that name gets no status icon; its name colour
-  still shows the status. **Record Status: Show Log** lists such names.
+  still shows the status. **MD Status: Show Log** lists such names.
 
 ## Agent skill
 
-[`skills/record-status/SKILL.md`](skills/record-status/SKILL.md) teaches a coding agent (Claude
+[`skills/md-status/SKILL.md`](skills/md-status/SKILL.md) teaches a coding agent (Claude
 Code, or any agent that reads Agent Skills) to write records in this layout: the folders, file
 names, the status line, what each status word means, and which ones only a person should set (an
-agent finishes a task as `check`, never `done`). To use it, copy the `skills/record-status` folder
+agent finishes a task as `check`, never `done`). To use it, copy the `skills/md-status` folder
 into `~/.claude/skills/` for every project, or into a project's `.claude/skills/` to share it with
 everyone on that project. A project's own rules (`AGENTS.md`, its own records skill) take
 precedence over it. It is not part of the `.vsix`.
@@ -115,12 +117,12 @@ precedence over it. It is not part of the `.vsix`.
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `recordStatus.profiles` | built-in `task`, `decision`, `spec`, `reference` | Kinds of record, in order; the first whose `include` globs match a file owns it. Each has `include`, an optional `statusPattern`, and `statuses` (word → look). A profile named like a built-in one inherits the built-in `include` and `statuses` it doesn't set. |
-| `recordStatus.statusPattern` | `\*\*Status:\*\*\s*([A-Za-z-]+)` | Regex that finds the status; the first group is it. Lower-cased; `"superseded by 004"` reads as `superseded`. |
-| `recordStatus.iconMode` | `auto` | `auto`, `bundled`, `material`, `badge` or `off` (see above). |
-| `recordStatus.colorPreset` | `git` | Name colours: `git` (git's Explorer colours), `classic` (Record Status's own), `soft` (classic, lower contrast), `theme` (the colour theme's chart colours), `quiet` (only what needs attention), `monochrome` (shades of grey, icons included; with Material Icon Theme also set `material-icon-theme.saturation` to 0), `dark` (deeper, muted colours), `none`. |
-| `recordStatus.colors` | `{}` | Per-slot overrides on top of the preset: slot (`planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`) → theme colour id, or `""` for none. |
-| `recordStatus.rollup` | on, tasks | `enabled`, `profiles` (whose records count; `["task"]`), `folders` (globs of folders that get a badge; empty: the folder above each record's folder), `nameColor` (folder name at 100%). |
+| `mdStatus.profiles` | built-in `task`, `decision`, `spec`, `reference` | Kinds of record, in order; the first whose `include` globs match a file owns it. Each has `include`, an optional `statusPattern`, and `statuses` (word → look). A profile named like a built-in one inherits the built-in `include` and `statuses` it doesn't set. |
+| `mdStatus.statusPattern` | `\*\*Status:\*\*\s*([A-Za-z-]+)` | Regex that finds the status; the first group is it. Lower-cased; `"superseded by 004"` reads as `superseded`. |
+| `mdStatus.iconMode` | `auto` | `auto`, `bundled`, `material`, `badge` or `off` (see above). |
+| `mdStatus.colorPreset` | `git` | Name colours: `git` (git's Explorer colours), `classic` (MD Status's own), `soft` (classic, lower contrast), `theme` (the colour theme's chart colours), `quiet` (only what needs attention), `monochrome` (shades of grey, icons included; with Material Icon Theme also set `material-icon-theme.saturation` to 0), `dark` (deeper, muted colours), `none`. |
+| `mdStatus.colors` | `{}` | Per-slot overrides on top of the preset: slot (`planned`, `inProgress`, `check`, `completed`, `blocked`, `living`, `dropped`, `proposed`) → theme colour id, or `""` for none. |
+| `mdStatus.rollup` | on, tasks | `enabled`, `profiles` (whose records count; `["task"]`), `folders` (globs of folders that get a badge; empty: the folder above each record's folder), `nameColor` (folder name at 100%). |
 
 A look (one entry of `statuses`) has `icon` (a Material Icon Theme icon name), `iconColor` (a
 Material palette name such as `amber-500`, or hex), `nameColor` (a theme colour id), `badge`
@@ -130,34 +132,34 @@ Material palette name such as `amber-500`, or hex), `nameColor` (a theme colour 
 Example: your own folders for tasks, and ADRs with a front-matter `status: draft` field:
 
 ```jsonc
-"recordStatus.profiles": {
+"mdStatus.profiles": {
     "task": { "include": ["planning/*.md"] },          // built-in task words
     "adr": {
         "include": ["docs/adr/*.md"],
         "statusPattern": "^status:\\s*(\\S+)",
         "statuses": {
-            "draft":    { "icon": "todo",     "iconColor": "gray-500",  "nameColor": "recordStatus.planned",   "glyph": "·" },
-            "accepted": { "icon": "verified", "iconColor": "green-500", "nameColor": "recordStatus.completed", "glyph": "✓" }
+            "draft":    { "icon": "todo",     "iconColor": "gray-500",  "nameColor": "mdStatus.planned",   "glyph": "·" },
+            "accepted": { "icon": "verified", "iconColor": "green-500", "nameColor": "mdStatus.completed", "glyph": "✓" }
         }
     }
 }
 ```
 
-**Record Status: Configure…** adds folders to a profile without editing JSON.
+**MD Status: Configure…** adds folders to a profile without editing JSON.
 
-The 0.2 settings `recordStatus.include` and `recordStatus.statuses` still work, as one profile,
-while `profiles` is empty; `recordStatus.icons: false` means `iconMode: "off"`.
+The 0.2 settings `mdStatus.include` and `mdStatus.statuses` still work, as one profile,
+while `profiles` is empty; `mdStatus.icons: false` means `iconMode: "off"`.
 
-Colours: a look's `nameColor` names a slot (`recordStatus.completed`); `colorPreset` and
+Colours: a look's `nameColor` names a slot (`mdStatus.completed`); `colorPreset` and
 `colors` decide which theme colour that slot uses. For an exact hex value, keep the slot on its
-`recordStatus.*` id and set it in `workbench.colorCustomizations`:
+`mdStatus.*` id and set it in `workbench.colorCustomizations`:
 
 ```jsonc
-"recordStatus.colors": { "planned": "", "completed": "charts.green" },
-"workbench.colorCustomizations": { "recordStatus.inProgress": "#ff9900" }
+"mdStatus.colors": { "planned": "", "completed": "charts.green" },
+"workbench.colorCustomizations": { "mdStatus.inProgress": "#ff9900" }
 ```
 
-The colour ids `recordStatus.planned`, `.inProgress`, `.check`, `.completed`, `.blocked`,
+The colour ids `mdStatus.planned`, `.inProgress`, `.check`, `.completed`, `.blocked`,
 `.living`, `.dropped` and `.proposed` can be retuned per theme in `workbench.colorCustomizations`.
 
 ## Development

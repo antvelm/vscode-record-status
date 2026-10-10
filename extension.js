@@ -1,9 +1,9 @@
-// Record Status: shows the status written inside a Markdown file on that file in the Explorer.
+// MD Status: shows the status written inside a Markdown file on that file in the Explorer.
 //
 // The status read from each file drives:
 //  - a FileDecoration (name colour, tooltip, optional badge), the API git uses for "M";
-//  - the file icon, in one of these ways (`recordStatus.iconMode`):
-//      bundled  - this extension's own file icon theme, "Record Status Icons": Material Icon
+//  - the file icon, in one of these ways (`mdStatus.iconMode`):
+//      bundled  - this extension's own file icon theme, "MD Status Icons": Material Icon
 //                 Theme's icons copied in at build time, plus one recoloured icon per status. The
 //                 theme manifest in the extension folder is rewritten when statuses change, and VS
 //                 Code reloads it (`_watch` in package.json). Writes nothing into the workspace.
@@ -20,8 +20,8 @@ const core = require("./core");
 
 const MATERIAL = "PKief.material-icon-theme";
 const MATERIAL_THEME = "material-icon-theme";
-const BUNDLED_THEME = "record-status-icons";
-const PROMPTED_KEY = "recordStatus.iconPromptShown";
+const BUNDLED_THEME = "md-status-icons";
+const PROMPTED_KEY = "mdStatus.iconPromptShown";
 
 function explicit(config, key) {
     const i = config.inspect(key) || {};
@@ -30,7 +30,7 @@ function explicit(config, key) {
 
 /** Reads the extension's settings into one object. */
 function settings() {
-    const config = vscode.workspace.getConfiguration("recordStatus");
+    const config = vscode.workspace.getConfiguration("mdStatus");
     const profiles = core.resolveProfiles({
         profiles: config.get("profiles"),
         legacy: { include: explicit(config, "include"), statuses: explicit(config, "statuses") },
@@ -52,7 +52,7 @@ function settings() {
             enabled: rollup.enabled !== false,
             profiles: rollup.profiles || ["task"],
             folderMatchers: (rollup.folders || []).map(core.globToRegExp),
-            nameColor: rollup.nameColor === undefined ? "recordStatus.completed" : rollup.nameColor,
+            nameColor: rollup.nameColor === undefined ? "mdStatus.completed" : rollup.nameColor,
         },
     };
 }
@@ -75,7 +75,7 @@ function titleCase(s) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 }
 
-class RecordStatus {
+class MdStatus {
     constructor(context, log) {
         this._context = context;
         this._log = log;
@@ -262,7 +262,7 @@ class RecordStatus {
         }
         const base = core.GREYSCALE_PRESETS.includes(this._settings.colorPreset) ? this.greyBase() : this._base;
         const manifest = core.buildThemeManifest(base, groups, (id) => `./generated/${id}.svg`);
-        writeIfChanged(path.join(this._themeDir, "record-status-icons.json"), JSON.stringify(manifest));
+        writeIfChanged(path.join(this._themeDir, "md-status-icons.json"), JSON.stringify(manifest));
     }
 
     /**
@@ -293,16 +293,16 @@ class RecordStatus {
         const state = this._context.globalState;
         if (state.get(PROMPTED_KEY)) { return; }
         state.update(PROMPTED_KEY, true);
-        const use = "Use Record Status Icons";
+        const use = "Use MD Status Icons";
         const badges = "Badges only";
         vscode.window.showInformationMessage(
-            "Record Status: show each record's status as its Explorer icon? This switches your file icon theme to Record Status Icons (Material Icon Theme's icons plus status icons).",
+            "MD Status: show each record's status as its Explorer icon? This switches your file icon theme to MD Status Icons (Material Icon Theme's icons plus status icons).",
             use, badges,
         ).then((choice) => {
             if (choice === use) {
                 vscode.workspace.getConfiguration("workbench").update("iconTheme", BUNDLED_THEME, vscode.ConfigurationTarget.Global);
             } else if (choice === badges) {
-                vscode.workspace.getConfiguration("recordStatus").update("iconMode", "badge", vscode.ConfigurationTarget.Global);
+                vscode.workspace.getConfiguration("mdStatus").update("iconMode", "badge", vscode.ConfigurationTarget.Global);
             }
         });
     }
@@ -317,9 +317,9 @@ function writeIfChanged(file, text) {
     fs.writeFileSync(file, text);
 }
 
-/** "Record Status: Configure…": adds a folder's Markdown files to a profile in the workspace settings. */
+/** "MD Status: Configure…": adds a folder's Markdown files to a profile in the workspace settings. */
 async function configure() {
-    const config = vscode.workspace.getConfiguration("recordStatus");
+    const config = vscode.workspace.getConfiguration("mdStatus");
     const current = config.get("profiles");
     const profiles = JSON.parse(JSON.stringify(current && Object.keys(current).length ? current : core.DEFAULT_PROFILES));
     const pick = await vscode.window.showQuickPick(
@@ -344,12 +344,40 @@ async function configure() {
         if (!include.includes(glob)) { include.push(glob); }
     }
     await config.update("profiles", profiles, vscode.ConfigurationTarget.Workspace);
-    vscode.window.showInformationMessage(`Record Status: ${pick.label} records now include ${include.join(", ")}.`);
+    vscode.window.showInformationMessage(`MD Status: ${pick.label} records now include ${include.join(", ")}.`);
+}
+
+// The extension was called Record Status, with settings under `recordStatus.*`. Copies any value
+// set there to the same `mdStatus.*` key, unless that key already has its own value at that level.
+async function migrateLegacySettings(context, log) {
+    const props = context.extension.packageJSON.contributes.configuration.properties;
+    const keys = Object.keys(props).map((k) => k.slice("mdStatus.".length));
+    const targets = [
+        [vscode.ConfigurationTarget.Global, "globalValue", [undefined]],
+        [vscode.ConfigurationTarget.Workspace, "workspaceValue", [undefined]],
+        [vscode.ConfigurationTarget.WorkspaceFolder, "workspaceFolderValue", (vscode.workspace.workspaceFolders || []).map((f) => f.uri)],
+    ];
+    for (const [target, field, scopes] of targets) {
+        for (const scope of scopes) {
+            const legacy = vscode.workspace.getConfiguration("recordStatus", scope);
+            const current = vscode.workspace.getConfiguration("mdStatus", scope);
+            for (const key of keys) {
+                const old = (legacy.inspect(key) || {})[field];
+                if (old === undefined || (current.inspect(key) || {})[field] !== undefined) { continue; }
+                try {
+                    await current.update(key, old, target);
+                    log.appendLine(`Moved recordStatus.${key} to mdStatus.${key}.`);
+                } catch (e) {
+                    log.appendLine(`Could not move recordStatus.${key}: ${e}`);
+                }
+            }
+        }
+    }
 }
 
 function activate(context) {
-    const log = vscode.window.createOutputChannel("Record Status");
-    const records = new RecordStatus(context, log);
+    const log = vscode.window.createOutputChannel("MD Status");
+    const records = new MdStatus(context, log);
     context.subscriptions.push(log, vscode.window.registerFileDecorationProvider(records));
 
     // Any Markdown file may become one of ours, so watch them all and filter by profile.
@@ -360,13 +388,16 @@ function activate(context) {
     context.subscriptions.push(watcher);
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((doc) => records.update(doc.uri)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration("recordStatus") || e.affectsConfiguration("workbench.iconTheme")) { records.rescan(); }
+        if (e.affectsConfiguration("mdStatus") || e.affectsConfiguration("workbench.iconTheme")) { records.rescan(); }
     }));
     context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => records.rescan()));
-    context.subscriptions.push(vscode.commands.registerCommand("recordStatus.configure", configure));
-    context.subscriptions.push(vscode.commands.registerCommand("recordStatus.showLog", () => log.show()));
+    context.subscriptions.push(vscode.commands.registerCommand("mdStatus.configure", configure));
+    context.subscriptions.push(vscode.commands.registerCommand("mdStatus.showLog", () => log.show()));
 
-    records.rescan().catch((e) => log.appendLine(`rescan: ${e}`));
+    migrateLegacySettings(context, log)
+        .catch((e) => log.appendLine(`settings migration: ${e}`))
+        .then(() => records.rescan())
+        .catch((e) => log.appendLine(`rescan: ${e}`));
 }
 
 function deactivate() {}

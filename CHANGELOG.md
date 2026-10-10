@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- **Renamed to MD Status** (was Record Status): extension ID `manapotionstudios.md-status`, settings
+  `mdStatus.*`, commands under "MD Status", icon theme "MD Status Icons", repository
+  `antvelm/vscode-md-status`. Settings under `recordStatus.*` are copied to `mdStatus.*` on first
+  start; colour overrides in `workbench.colorCustomizations` need the new `mdStatus.*` ids.
+- New pixel-art icon.
+
 ## 0.3.4
 
 - README: the promo animation at the top; install steps for the Marketplace and Open VSX first,

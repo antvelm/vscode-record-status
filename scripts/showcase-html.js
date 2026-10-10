@@ -10,7 +10,7 @@ function showcaseHtml(data) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Record Status Showcase</title>
+<title>MD Status Showcase</title>
 <style>
 :root {
   --page: #f6f6f4; --ink: #1f2328; --muted: #59636e; --line: #d8dee4; --card: #ffffff;
@@ -70,7 +70,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
 </head>
 <body>
 <main>
-  <h1>Record Status</h1>
+  <h1>MD Status</h1>
   <p>How the extension shows the status written inside a Markdown file in the VS Code Explorer.
   Click a file to cycle its status; switch the Explorer theme and the icon mode to see each case.
   Generated from the extension's own data (version ${data.version}); icons are Material Icon Theme's.</p>
@@ -97,12 +97,12 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
   <p>Shape = kind of record, colour = state. The glyph is what badge mode shows instead of an icon.</p>
   <div class="legend" id="legend"></div>
 
-  <footer>Record Status · regenerate with <code>npm run showcase</code></footer>
+  <footer>MD Status · regenerate with <code>npm run showcase</code></footer>
 </main>
 <script>
 const DATA = ${JSON.stringify(data)};
 const MODE_NOTES = {
-  bundled: "<h3>bundled</h3><p>Record Status Icons is the file icon theme: Material Icon Theme's icons plus one recoloured icon per status. Nothing is written into the workspace.</p><p>Recommended when <code>.vscode/settings.json</code> is under version control.</p>",
+  bundled: "<h3>bundled</h3><p>MD Status Icons is the file icon theme: Material Icon Theme's icons plus one recoloured icon per status. Nothing is written into the workspace.</p><p>Recommended when <code>.vscode/settings.json</code> is under version control.</p>",
   material: "<h3>material</h3><p>Material Icon Theme stays the file icon theme. Looks the same as bundled, but the icons come from <code>record-*</code> clones the extension writes into the workspace's <code>.vscode/settings.json</code> on every status change.</p>",
   badge: "<h3>badge</h3><p>Any icon theme. Files keep their own icon; a glyph after the name, in the name colour, carries the status.</p>",
   off: "<h3>off</h3><p>Name colour only.</p>",
@@ -126,7 +126,7 @@ function colorOf(id) { const c = DATA.colors[id]; return c ? c[state.ex] : null;
 function nameColor(id) {
   if (!id) return null;
   // No backslashes: this script sits inside a template literal.
-  const m = /^recordStatus[.]([A-Za-z]+)$/.exec(id);
+  const m = /^mdStatus[.]([A-Za-z]+)$/.exec(id);
   const resolved = m && DATA.presets[state.preset][m[1]] !== undefined ? DATA.presets[state.preset][m[1]] : id;
   return resolved ? colorOf(resolved) : null;
 }
@@ -154,7 +154,7 @@ function statusIcon(profile, status) {
   const ip = DATA.iconPresets[state.preset];
   if (ip) {
     // Presets that recolour icons too (monochrome): one colour per slot and theme.
-    const m = /^recordStatus[.]([A-Za-z]+)$/.exec(l.nameColor || "");
+    const m = /^mdStatus[.]([A-Za-z]+)$/.exec(l.nameColor || "");
     const c = (m && ip[m[1]]) || ip.other;
     return recolor(DATA.raw[pick || l.icon], c[state.ex]);
   }
@@ -198,7 +198,7 @@ function render() {
       const c = roll[r.id];
       if (c && c.counted) {
         badge = c.done >= c.counted ? "✓" : String(Math.floor(100 * c.done / c.counted));
-        if (c.done >= c.counted) color = nameColor("recordStatus.completed");
+        if (c.done >= c.counted) color = nameColor("mdStatus.completed");
         tip = c.done + " of " + c.counted + " done";
       }
     } else {

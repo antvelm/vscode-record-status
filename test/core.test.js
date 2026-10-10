@@ -152,17 +152,17 @@ test("default looks use icons and colours that exist", () => {
 
 test("resolveNameColor: presets, overrides, other ids pass through", () => {
     assert.strictEqual(core.DEFAULT_COLOR_PRESET, "git");
-    assert.strictEqual(core.resolveNameColor("recordStatus.completed"), "gitDecoration.addedResourceForeground");
-    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "classic"), "recordStatus.completed");
-    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "theme"), "charts.green");
-    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "quiet"), "");
-    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "none"), "");
-    assert.strictEqual(core.resolveNameColor("recordStatus.blocked", "git", { blocked: "errorForeground" }), "errorForeground");
-    assert.strictEqual(core.resolveNameColor("recordStatus.completed", "classic", { completed: "" }), "");
+    assert.strictEqual(core.resolveNameColor("mdStatus.completed"), "gitDecoration.addedResourceForeground");
+    assert.strictEqual(core.resolveNameColor("mdStatus.completed", "classic"), "mdStatus.completed");
+    assert.strictEqual(core.resolveNameColor("mdStatus.completed", "theme"), "charts.green");
+    assert.strictEqual(core.resolveNameColor("mdStatus.completed", "quiet"), "");
+    assert.strictEqual(core.resolveNameColor("mdStatus.blocked", "none"), "");
+    assert.strictEqual(core.resolveNameColor("mdStatus.blocked", "git", { blocked: "errorForeground" }), "errorForeground");
+    assert.strictEqual(core.resolveNameColor("mdStatus.completed", "classic", { completed: "" }), "");
     assert.strictEqual(core.resolveNameColor("charts.red", "none"), "charts.red");
-    assert.strictEqual(core.resolveNameColor("recordStatus.unknown", "none"), "recordStatus.unknown");
+    assert.strictEqual(core.resolveNameColor("mdStatus.unknown", "none"), "mdStatus.unknown");
     assert.strictEqual(core.resolveNameColor("", "theme"), "");
-    assert.strictEqual(core.resolveNameColor("recordStatus.check", "nonsense"), "terminal.ansiCyan");
+    assert.strictEqual(core.resolveNameColor("mdStatus.check", "nonsense"), "terminal.ansiCyan");
     for (const [name, table] of Object.entries(core.COLOR_PRESETS)) {
         assert.deepStrictEqual(Object.keys(table).sort(), [...core.COLOR_SLOTS].sort(), name);
     }

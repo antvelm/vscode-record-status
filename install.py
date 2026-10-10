@@ -1,4 +1,4 @@
-"""Builds Record Status into a .vsix and installs it into VS Code.
+"""Builds MD Status into a .vsix and installs it into VS Code.
 
     python install.py            build the .vsix and install it
     python install.py --package  only build the .vsix (to share it, or install it by hand)
@@ -6,7 +6,7 @@
 Needs Node.js (npm installs the pinned material-icon-theme the bundled icon theme is built from,
 and `npx @vscode/vsce` packages) and VS Code's `code` command on PATH. The .vsix lands next
 to this file; installing it by hand is "Extensions: Install from VSIX..." in VS Code, or
-`code --install-extension record-status-<version>.vsix`. Run it again after editing the
+`code --install-extension md-status-<version>.vsix`. Run it again after editing the
 extension, then "Developer: Reload Window".
 """
 import json

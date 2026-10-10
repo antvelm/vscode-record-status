@@ -1,4 +1,4 @@
-// Record Status core: everything that does not need VS Code, so it can be tested with plain Node.
+// MD Status core: everything that does not need VS Code, so it can be tested with plain Node.
 //
 // A *record* is a Markdown file matched by a *profile* (a kind of record: task, decision, spec, …).
 // Each profile has its own include globs, status pattern and status words, and each status word
@@ -15,32 +15,32 @@ const DEFAULT_PROFILES = {
     task: {
         include: ["**/tasks/*.md"],
         statuses: {
-            planned: { icon: "todo",     iconColor: "gray-500",  nameColor: "recordStatus.planned",    glyph: "·" },
-            active:  { icon: "settings", iconColor: "amber-500", nameColor: "recordStatus.inProgress", glyph: "●" },
-            check:   { icon: "search",   iconColor: "cyan-500",  nameColor: "recordStatus.check",      glyph: "◐" },
-            done:    { icon: "verified", iconColor: "green-500", nameColor: "recordStatus.completed",  glyph: "✓", rollup: "done" },
-            blocked: { icon: "lock",     iconColor: "red-500",   nameColor: "recordStatus.blocked",    glyph: "✗" },
-            dropped: { icon: "todo",     iconColor: "gray-700",  nameColor: "recordStatus.dropped",    glyph: "–", rollup: "skip" },
-            split:   { icon: "diff",     iconColor: "gray-700",  nameColor: "recordStatus.dropped",    glyph: "→", rollup: "skip" },
+            planned: { icon: "todo",     iconColor: "gray-500",  nameColor: "mdStatus.planned",    glyph: "·" },
+            active:  { icon: "settings", iconColor: "amber-500", nameColor: "mdStatus.inProgress", glyph: "●" },
+            check:   { icon: "search",   iconColor: "cyan-500",  nameColor: "mdStatus.check",      glyph: "◐" },
+            done:    { icon: "verified", iconColor: "green-500", nameColor: "mdStatus.completed",  glyph: "✓", rollup: "done" },
+            blocked: { icon: "lock",     iconColor: "red-500",   nameColor: "mdStatus.blocked",    glyph: "✗" },
+            dropped: { icon: "todo",     iconColor: "gray-700",  nameColor: "mdStatus.dropped",    glyph: "–", rollup: "skip" },
+            split:   { icon: "diff",     iconColor: "gray-700",  nameColor: "mdStatus.dropped",    glyph: "→", rollup: "skip" },
         },
     },
     decision: {
         include: ["**/decisions/*.md"],
         statuses: {
-            open:       { icon: "routing", iconColor: "amber-500", nameColor: "recordStatus.proposed",  glyph: "?" },
-            decided:    { icon: "routing", iconColor: "green-500", nameColor: "recordStatus.completed", glyph: "✓" },
-            superseded: { icon: "routing", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
-            dropped:    { icon: "routing", iconColor: "gray-700",  nameColor: "recordStatus.dropped",   glyph: "–" },
+            open:       { icon: "routing", iconColor: "amber-500", nameColor: "mdStatus.proposed",  glyph: "?" },
+            decided:    { icon: "routing", iconColor: "green-500", nameColor: "mdStatus.completed", glyph: "✓" },
+            superseded: { icon: "routing", iconColor: "gray-700",  nameColor: "mdStatus.dropped",   glyph: "–" },
+            dropped:    { icon: "routing", iconColor: "gray-700",  nameColor: "mdStatus.dropped",   glyph: "–" },
         },
     },
     spec: {
         include: ["**/spec/*.md"],
         statuses: {
-            draft:      { icon: "document",     iconColor: "gray-500",      nameColor: "recordStatus.planned",   glyph: "·" },
-            review:     { icon: "document",     iconColor: "amber-500",     nameColor: "recordStatus.proposed",  glyph: "?" },
-            accepted:   { icon: "document",     iconColor: "green-500",     nameColor: "recordStatus.completed", glyph: "✓" },
-            living:     { icon: "document",     iconColor: "blue-500",      nameColor: "recordStatus.living",    glyph: "●" },
-            superseded: { icon: "document",     iconColor: "gray-700",      nameColor: "recordStatus.dropped",   glyph: "–" },
+            draft:      { icon: "document",     iconColor: "gray-500",      nameColor: "mdStatus.planned",   glyph: "·" },
+            review:     { icon: "document",     iconColor: "amber-500",     nameColor: "mdStatus.proposed",  glyph: "?" },
+            accepted:   { icon: "document",     iconColor: "green-500",     nameColor: "mdStatus.completed", glyph: "✓" },
+            living:     { icon: "document",     iconColor: "blue-500",      nameColor: "mdStatus.living",    glyph: "●" },
+            superseded: { icon: "document",     iconColor: "gray-700",      nameColor: "mdStatus.dropped",   glyph: "–" },
             explainer:  { icon: "instructions", iconColor: "blue-gray-500", nameColor: "",                       glyph: "" },
         },
     },
@@ -55,17 +55,17 @@ const DEFAULT_PROFILES = {
 };
 
 /**
- * Name-colour presets (`recordStatus.colorPreset`). A look names a colour slot as
- * `recordStatus.<slot>`; a preset maps each slot to a theme colour id, or to "" for no colour.
+ * Name-colour presets (`mdStatus.colorPreset`). A look names a colour slot as
+ * `mdStatus.<slot>`; a preset maps each slot to a theme colour id, or to "" for no colour.
  * "classic" is the extension's own colours, which `workbench.colorCustomizations` can retune; "git"
  * is the default.
  */
 const COLOR_SLOTS = ["planned", "inProgress", "check", "completed", "blocked", "living", "dropped", "proposed"];
 const DEFAULT_COLOR_PRESET = "git";
 const COLOR_PRESETS = {
-    classic: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.${s}`])),
+    classic: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `mdStatus.${s}`])),
     // The classic colours with lower contrast, a third of the way toward the background.
-    soft: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.soft.${s}`])),
+    soft: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `mdStatus.soft.${s}`])),
     // Follows the active colour theme's own palette.
     theme: {
         planned: "descriptionForeground", inProgress: "charts.yellow", check: "terminal.ansiCyan", completed: "charts.green",
@@ -80,13 +80,13 @@ const COLOR_PRESETS = {
     },
     // Colour only what needs attention: active, check, blocked, open or in review.
     quiet: {
-        planned: "", inProgress: "recordStatus.inProgress", check: "recordStatus.check", completed: "",
-        blocked: "recordStatus.blocked", living: "", dropped: "recordStatus.dropped", proposed: "recordStatus.proposed",
+        planned: "", inProgress: "mdStatus.inProgress", check: "mdStatus.check", completed: "",
+        blocked: "mdStatus.blocked", living: "", dropped: "mdStatus.dropped", proposed: "mdStatus.proposed",
     },
     // Shades of grey: attention brightest, done mid, dropped dimmest.
-    monochrome: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.mono.${s}`])),
+    monochrome: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `mdStatus.mono.${s}`])),
     // Deeper, muted versions of the default colours.
-    dark: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `recordStatus.dark.${s}`])),
+    dark: Object.fromEntries(COLOR_SLOTS.map((s) => [s, `mdStatus.dark.${s}`])),
     none: Object.fromEntries(COLOR_SLOTS.map((s) => [s, ""])),
 };
 
@@ -120,7 +120,7 @@ function presetLooks(byName, preset) {
     for (const [name, p] of Object.entries(byName)) {
         const statuses = {};
         for (const [word, look] of Object.entries(p.statuses)) {
-            const m = /^recordStatus\.(\w+)$/.exec(look.nameColor || "");
+            const m = /^mdStatus\.(\w+)$/.exec(look.nameColor || "");
             const c = (m && table[m[1]]) || table.other;
             statuses[word] = { ...look, iconColor: c.dark, iconColorLight: c.light };
         }
@@ -130,13 +130,13 @@ function presetLooks(byName, preset) {
 }
 
 /**
- * The theme colour id a look's `nameColor` resolves to, or "" for none. `recordStatus.<slot>`
- * goes through `overrides[slot]` (`recordStatus.colors`) first, then the preset; any other id is
+ * The theme colour id a look's `nameColor` resolves to, or "" for none. `mdStatus.<slot>`
+ * goes through `overrides[slot]` (`mdStatus.colors`) first, then the preset; any other id is
  * used as it is.
  */
 function resolveNameColor(nameColor, preset = DEFAULT_COLOR_PRESET, overrides = {}) {
     if (!nameColor) { return ""; }
-    const m = /^recordStatus\.(\w+)$/.exec(nameColor);
+    const m = /^mdStatus\.(\w+)$/.exec(nameColor);
     if (!m || !COLOR_SLOTS.includes(m[1])) { return nameColor; }
     if (overrides && typeof overrides[m[1]] === "string") { return overrides[m[1]]; }
     const table = COLOR_PRESETS[preset] || COLOR_PRESETS[DEFAULT_COLOR_PRESET];

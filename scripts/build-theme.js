@@ -1,9 +1,9 @@
-// Builds the bundled icon theme, "Record Status Icons", from the pinned material-icon-theme
+// Builds the bundled icon theme, "MD Status Icons", from the pinned material-icon-theme
 // devDependency (MIT; its licence is copied next to the icons):
 //
 //   theme/icons/*.svg               Material Icon Theme's icons
 //   theme/material-icons.base.json  its manifest, icon paths made relative to theme/
-//   theme/record-status-icons.json  the manifest VS Code loads; the extension rewrites it at
+//   theme/md-status-icons.json  the manifest VS Code loads; the extension rewrites it at
 //                                   runtime with the status icons, this is its starting point
 //   theme/MATERIAL-LICENSE.txt
 //
@@ -40,7 +40,7 @@ function main() {
     }
     const text = JSON.stringify(manifest);
     fs.writeFileSync(path.join(THEME, "material-icons.base.json"), text);
-    fs.writeFileSync(path.join(THEME, "record-status-icons.json"), text);
+    fs.writeFileSync(path.join(THEME, "md-status-icons.json"), text);
     fs.copyFileSync(path.join(pkgDir, "LICENSE"), path.join(THEME, "MATERIAL-LICENSE.txt"));
 
     console.log(`theme: ${icons.length} icons from material-icon-theme ${version}`);

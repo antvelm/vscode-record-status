@@ -1,4 +1,4 @@
-# Record Status: design showcase
+# MD Status: design showcase
 
 Every case the extension draws in the Explorer, generated from the extension's own data
 (`core.js` built-in profiles, the bundled icon theme, `package.json` colours) by
@@ -78,9 +78,9 @@ as `material`).
 
 ## 2. Icon modes
 
-One folder in each `recordStatus.iconMode`. Roll-up and name colours are the same in every mode.
+One folder in each `mdStatus.iconMode`. Roll-up and name colours are the same in every mode.
 
-### `bundled` — Record Status Icons is the file icon theme
+### `bundled` — MD Status Icons is the file icon theme
 
 Status icons, name colours. Writes nothing into the workspace.
 
@@ -110,14 +110,14 @@ Name colour only.
 |---|---|
 | <img src="showcase/mode-off-dark.svg" alt="off mode, dark theme" width="340"> | <img src="showcase/mode-off-light.svg" alt="off mode, light theme" width="340"> |
 
-### Name colours: `recordStatus.colorPreset`
+### Name colours: `mdStatus.colorPreset`
 
 The same folder with each preset. `git` (the default) and `theme` borrow colours from the
 active colour theme, so they change with it (shown here as VS Code's Dark and Light Modern draw
-them). `classic` is Record Status's own colours, `soft` the same with lower contrast.
+them). `classic` is MD Status's own colours, `soft` the same with lower contrast.
 `monochrome` turns the icons grey too: in bundled mode the whole icon theme; with Material
-Icon Theme, set `material-icon-theme.saturation` to 0. `recordStatus.colors` overrides single slots, and
-`workbench.colorCustomizations` sets exact hex values for the `recordStatus.*` ids.
+Icon Theme, set `material-icon-theme.saturation` to 0. `mdStatus.colors` overrides single slots, and
+`workbench.colorCustomizations` sets exact hex values for the `mdStatus.*` ids.
 
 #### `classic`
 

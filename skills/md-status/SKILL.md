@@ -1,17 +1,17 @@
 ---
-name: record-status
-description: Write and update Markdown records — specs, decisions (ADRs) and tasks — in the layout the Record Status VS Code extension reads (spec/, decisions/, tasks/ folders with a **Status:** line). Use when opening a decision, writing a spec, cutting tasks, starting or finishing a task, ticking a checklist, or changing any record's status. A project's own records skill or rules file takes precedence over this one.
+name: md-status
+description: Write and update Markdown records — specs, decisions (ADRs) and tasks — in the layout the MD Status VS Code extension reads (spec/, decisions/, tasks/ folders with a **Status:** line). Use when opening a decision, writing a spec, cutting tasks, starting or finishing a task, ticking a checklist, or changing any record's status. A project's own records skill or rules file takes precedence over this one.
 ---
 
 # Records: specs, decisions and tasks
 
-A **record** is one Markdown file whose status is written inside it. The Record Status extension
+A **record** is one Markdown file whose status is written inside it. The MD Status extension
 shows that status as the file's icon and name colour in VS Code's Explorer, and shows on the folder
 above `tasks/` how many tasks are done. It needs no settings when records follow this layout.
 
 Before writing, check the project for its own rules (`AGENTS.md`, `CLAUDE.md`, an `agents/` or
 `docs/` folder, an index script). They win over this file. Also check
-`.vscode/settings.json` for `recordStatus.profiles`: a project that sets its own folders or status
+`.vscode/settings.json` for `mdStatus.profiles`: a project that sets its own folders or status
 words uses those, not the defaults below.
 
 ## Layout

@@ -14,6 +14,7 @@
 // File names are never touched, so links to the files stay valid. The logic that needs no VS Code
 // is in core.js.
 const vscode = require("vscode");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const core = require("./core");
@@ -219,12 +220,12 @@ class MdStatus {
         // Material clones live in the workspace settings: write them only in material mode, and
         // remove ours once when another mode takes over.
         await this.syncClones(this._mode === "material" ? groups : { byId: {} });
-        if (this._settings.iconMode !== "off") {
-            try {
-                this.writeBundledTheme(groups);
-            } catch (e) {
-                this._log.appendLine(`bundled theme: ${e}`);
-            }
+        // The bundled theme carries status icons only in bundled mode; in badge and off modes it is
+        // rewritten without them, so MD Status Icons shows plain file icons.
+        try {
+            this.writeBundledTheme(this._mode === "bundled" ? groups : { byId: {} });
+        } catch (e) {
+            this._log.appendLine(`bundled theme: ${e}`);
         }
     }
 
@@ -244,6 +245,14 @@ class MdStatus {
         if (!this._base) { this._base = JSON.parse(fs.readFileSync(basePath, "utf8")); }
         const generated = path.join(this._themeDir, "generated");
         fs.mkdirSync(generated, { recursive: true });
+        // VS Code caches icon images by path, so a recoloured icon must get a new file name:
+        // "<id>.<hash of its SVG>.svg". files: icon id -> file name.
+        const files = {};
+        const write = (id, svg) => {
+            const file = `${id}.${crypto.createHash("sha1").update(svg).digest("hex").slice(0, 8)}.svg`;
+            writeIfChanged(path.join(generated, file), svg);
+            files[id] = file;
+        };
         for (const [id, g] of Object.entries(groups.byId)) {
             // Look the icon up in the manifest: Material keeps derived icons as "<name>.clone.svg".
             const def = this._base.iconDefinitions[g.look.icon];
@@ -257,13 +266,22 @@ class MdStatus {
                 this._log.appendLine(`bundled theme: unknown colour "${g.look.iconColor}" (status ${g.profile}/${g.status})`);
             }
             const svg = fs.readFileSync(source, "utf8");
-            writeIfChanged(path.join(generated, `${id}.svg`), hex ? core.recolorSvg(svg, hex) : svg);
+            write(id, hex ? core.recolorSvg(svg, hex) : svg);
             const light = core.resolveColor(g.look.iconColorLight);
-            if (light) { writeIfChanged(path.join(generated, `${id}_light.svg`), core.recolorSvg(svg, light)); }
+            if (light) { write(`${id}_light`, core.recolorSvg(svg, light)); }
         }
+        // Icons whose source was missing were skipped above: leave them out of the theme too.
+        const shown = { ...groups, byId: Object.fromEntries(Object.entries(groups.byId).filter(([id]) => files[id])) };
         const base = core.GREYSCALE_PRESETS.includes(this._settings.colorPreset) ? this.greyBase() : this._base;
-        const manifest = core.buildThemeManifest(base, groups, (id) => `./generated/${id}.svg`);
+        const manifest = core.buildThemeManifest(base, shown, (id) => `./generated/${files[id] || files[id.replace(/_light$/, "")]}`);
         writeIfChanged(path.join(this._themeDir, "md-status-icons.json"), JSON.stringify(manifest));
+        // Drop icons no longer used, including the 0.4.1 "<id>.svg" names.
+        const used = new Set(Object.values(files));
+        for (const file of fs.readdirSync(generated)) {
+            if (file.endsWith(".svg") && !used.has(file)) {
+                try { fs.unlinkSync(path.join(generated, file)); } catch { /* in use or gone: next time */ }
+            }
+        }
     }
 
     /**

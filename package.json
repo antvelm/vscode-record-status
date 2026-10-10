@@ -2,7 +2,7 @@
     "name": "md-status",
     "displayName": "MD Status",
     "description": "Shows the status written inside a Markdown file (tasks, decisions, specs, ADRs) as the file's icon, name colour and folder progress in the Explorer. File names never change.",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "publisher": "manapotionstudios",
     "author": { "name": "Mana Potion Studios UG (haftungsbeschränkt)", "url": "https://github.com/antvelm" },
     "license": "MIT",
@@ -75,8 +75,6 @@
                     "type": "string",
                     "enum": ["auto", "bundled", "material", "badge", "off"],
                     "enumDescriptions": [
-                        "The colours git uses in the Explorer: modified (active), added (done), deleted (blocked), ignored (dropped). The default.",
-                        "MD Status's own colours (mdStatus.* colour ids; retune them in workbench.colorCustomizations).",
                         "Bundled when MD Status Icons is the active file icon theme, Material when Material Icon Theme is, otherwise badges.",
                         "Use this extension's icon theme, MD Status Icons. Writes nothing into the workspace. Falls back to badges while another icon theme is active.",
                         "Material Icon Theme clones, written into the workspace settings (material-icon-theme.files.customClones).",

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2
+
+- Icon Mode descriptions in the Settings editor matched the wrong options (the first two were
+  colour-preset texts); each option now has its own.
+- `badge` and `off` icon modes no longer leave status icons in MD Status Icons: the theme shows
+  plain file icons in those modes.
+- Changing the colour preset (e.g. to `monochrome`) now recolours the status icons straight away:
+  each recoloured icon gets a new file name, so VS Code can't show a cached old one.
+
 ## 0.4.1
 
 - One-click setup: on first use, a user on VS Code's default file icons (or on the old Record Status
